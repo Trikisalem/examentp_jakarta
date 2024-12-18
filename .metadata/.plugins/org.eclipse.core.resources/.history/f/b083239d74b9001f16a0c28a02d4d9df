@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .reservation-form {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .reservation-form h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .reservation-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .reservation-form input, .reservation-form select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .reservation-form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .reservation-form button:hover {
+            background-color: #218838;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <form class="reservation-form" action="submit_reservation.php" method="POST">
+        <h1>Room Reservation</h1>
+
+        <label for="first_name">First Name</label>
+        <input type="text" id="first_name" name="first_name" placeholder="Enter your first name" required>
+
+        <label for="last_name">Last Name</label>
+        <input type="text" id="last_name" name="last_name" placeholder="Enter your last name" required>
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+
+        <label for="phone">Phone</label>
+        <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" pattern="[0-9]{10}" required>
+
+        <label for="check_in">Check-in Date</label>
+        <input type="date" id="check_in" name="check_in" required>
+
+        <label for="check_out">Check-out Date</label>
+        <input type="date" id="check_out" name="check_out" required>
+
+        <label for="room_type">Room Type</label>
+        <select id="room_type" name="room_type" required>
+            <option value="">Select a room type</option>
+            <option value="garden_view">Garden View Room</option>
+            <option value="sea_view">Sea View Room</option>
+            <option value="bungalow">Bungalow</option>
+        </select>
+
+        <label for="capacity">Room Capacity</label>
+        <input type="number" id="capacity" name="capacity" min="1" placeholder="Enter room capacity" required>
+
+        <label for="price">Price per Night</label>
+        <input type="number" id="price" name="price" min="1" placeholder="Enter price per night" required>
+
+        <label for="hotel_id">Hotel ID</label>
+        <input type="number" id="hotel_id" name="hotel_id" min="1" placeholder="Enter associated hotel ID" required>
+
+        <button type="submit">Reserve</button>
+    </form>
+</body>
+</html>
+

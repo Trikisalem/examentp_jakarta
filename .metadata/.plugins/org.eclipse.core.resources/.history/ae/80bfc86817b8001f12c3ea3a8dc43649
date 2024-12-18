@@ -1,0 +1,32 @@
+package com.service;
+
+
+
+import java.util.List;
+
+import com.model.RoomType;
+
+import repository.RoomTypeRepository;
+
+public class RoomTypeService {
+    private final RoomTypeRepository roomTypeRepository;
+
+    public RoomTypeService(RoomTypeRepository roomTypeRepository) {
+        this.roomTypeRepository = roomTypeRepository;
+    }
+
+    public List<RoomType> getAllRoomTypes() {
+        return roomTypeRepository.findAll();
+    }
+
+    public RoomType getRoomTypeById(Long id) {
+        return roomTypeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Room Type not found with ID: " + id));
+    }
+
+    public RoomType addRoomType(RoomType roomType) {
+        return roomTypeRepository.save(roomType);
+    }
+
+   
+}

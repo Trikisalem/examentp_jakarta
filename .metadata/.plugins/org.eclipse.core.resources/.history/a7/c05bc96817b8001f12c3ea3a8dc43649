@@ -1,0 +1,22 @@
+package repository;
+
+
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.model.Account;
+
+@Repository
+public interface AccountRepository extends JpaRepository<Account, Long> {
+    // Méthode pour trouver un compte par email
+    Account findByEmail(String email);
+
+    // Méthode pour vérifier si un compte existe par email
+    boolean existsByEmail(String email);
+
+	List<Account> findAll();
+}
+

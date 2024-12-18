@@ -1,0 +1,51 @@
+package servlet;
+
+import dao.HotelDAO;
+import model.Hotel;
+import connecteur.MySQLConnectionTest;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+public class SearchHotel extends HttpServlet {
+
+    // Traitement de la requête POST
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupérer les paramètres du formulaire
+        String city = request.getParameter("city");
+        String starsStr = request.getParameter("stars");
+
+        // Vérifier si les paramètres sont valides
+        if (city == null || city.trim().isEmpty() || starsStr == null || starsStr.trim().isEmpty()) {
+            response.sendRedirect("error.jsp?message=City and stars are required");
+            return;
+        }
+
+        int stars = 0;
+        try {
+            stars = Integer.parseInt(starsStr);  // Conversion des étoiles en entier
+        } catch (NumberFormatException e) {
+            response.sendRedirect("error.jsp?message=Stars must be a valid number");
+            return;
+        }
+
+        // Créer une instance de la connexion à la base de données
+        MySQLConnectionTest connection = new MySQLConnectionTest();
+        HotelDAO hotelDAO = new HotelDAO(connection);
+
+        try {
+            List<Hotel> hotels = hotelDAO.searchHotels(city, stars);
+            request.setAttribute("hotels", hotels);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/searchResults.jsp");
+            dispatcher.forward(request, response);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur lors de la recherche des hôtels");
+        }
+
+    }
+}

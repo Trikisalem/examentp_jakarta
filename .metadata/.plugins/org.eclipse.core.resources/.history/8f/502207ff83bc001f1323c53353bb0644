@@ -1,0 +1,83 @@
+package model;
+
+import java.sql.*;
+import java.util.*;
+
+public class Reservation {
+
+    // Connexion à la base de données
+    private Connection getConnection() throws SQLException {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/hotel_management", // Base de données
+                "root", // Utilisateur
+                "triki" // Mot de passe
+            );
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver JDBC MySQL non trouvé", e);
+        }
+    }
+
+    // Récupérer les types de chambres disponibles
+    public List<String> getRoomTypes() throws SQLException {
+        List<String> roomTypes = new ArrayList<>();
+        try (Connection conn = getConnection()) {
+            String query = "SELECT label FROM RoomType";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                roomTypes.add(rs.getString("label"));
+            }
+        }
+        return roomTypes;
+    }
+
+    // Calculer le total du séjour en fonction des dates et du type de chambre
+    public double calculateTotal(String roomType, String checkIn, String checkOut) throws SQLException {
+        try (Connection conn = getConnection()) {
+            String query = "SELECT price FROM RoomType WHERE label = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, roomType);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                double pricePerNight = rs.getDouble("price");
+                java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+                java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+                long diff = checkOutDate.getTime() - checkInDate.getTime();
+                long days = diff / (1000 * 60 * 60 * 24);
+                return days * pricePerNight;
+            }
+        }
+        return 0;
+    }
+
+    // Créer une réservation
+    public boolean makeReservation(String firstName, String lastName, String email, String phone,
+                                    String checkIn, String checkOut, String roomType) {
+        try {
+            java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+            java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+
+            try (Connection conn = getConnection()) {
+                String query = "INSERT INTO Reservation " +
+                               "(guest_first_name, guest_last_name, guest_email, guest_phone, " +
+                               "check_in_date, check_out_date, room_type_id) " +
+                               "VALUES (?, ?, ?, ?, ?, ?, (SELECT id FROM RoomType WHERE label = ?))";
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                pstmt.setString(1, firstName);
+                pstmt.setString(2, lastName);
+                pstmt.setString(3, email);
+                pstmt.setString(4, phone);
+                pstmt.setDate(5, checkInDate);
+                pstmt.setDate(6, checkOutDate);
+                pstmt.setString(7, roomType);
+                int rowsAffected = pstmt.executeUpdate();
+                return rowsAffected > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+}

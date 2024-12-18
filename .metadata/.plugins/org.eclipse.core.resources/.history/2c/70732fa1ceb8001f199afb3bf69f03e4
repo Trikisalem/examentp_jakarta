@@ -1,0 +1,214 @@
+<%@page import="java.util.ArrayList"%>
+<%@page import="java.util.List"%>
+<%@page import="java.util.Iterator"%>
+<%
+    // Classe interne pour simuler un message
+    class Message {
+        private int id;
+        private String sender;
+        private String subject;
+        private String messageContent;
+        private String dateReceived;
+
+        public Message(int id, String sender, String subject, String messageContent, String dateReceived) {
+            this.id = id;
+            this.sender = sender;
+            this.subject = subject;
+            this.messageContent = messageContent;
+            this.dateReceived = dateReceived;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getSender() {
+            return sender;
+        }
+
+        public String getSubject() {
+            return subject;
+        }
+
+        public String getMessageContent() {
+            return messageContent;
+        }
+
+        public String getDateReceived() {
+            return dateReceived;
+        }
+    }
+%>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SUNRISE HOTEL</title>
+
+    <!-- CSS intégré -->
+    <style>
+        /* Style global */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Conteneur principal */
+        #wrapper {
+            display: flex;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 14px 20px;
+            margin: 0 10px;
+        }
+
+        .navbar a:hover {
+            background-color: #0b7dda;
+        }
+
+        /* Table */
+        .table-container {
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table th, .table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .table th {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .btn {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0b7dda;
+        }
+
+        /* Search Box */
+        .search-box {
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <div class="navbar">
+            <a href="home.jsp">Home</a>
+            <a href="messages.jsp" class="active-menu">Messages</a>
+            <a href="payment.jsp">Payment</a>
+        </div>
+
+        <div class="table-container">
+            <h1>Messages</h1>
+            
+            <!-- Barre de recherche -->
+            <input type="text" class="search-box" placeholder="Search Messages..." onkeyup="searchMessages()" />
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Sender</th>
+                        <th>Subject</th>
+                        <th>Date Received</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                        List<Message> messages = new ArrayList<>();
+                        messages.add(new Message(1, "John Doe", "Important Notice", "Please check the latest updates.", "2024-12-01"));
+                        messages.add(new Message(2, "Jane Smith", "New Offers", "We have new special offers for you.", "2024-12-02"));
+                        for (Message message : messages) {
+                    %>
+                    <tr>
+                        <td><%= message.getSender() %></td>
+                        <td><%= message.getSubject() %></td>
+                        <td><%= message.getDateReceived() %></td>
+                        <td><button class="btn" onclick="viewMessage(<%= message.getId() %>)">View</button></td>
+                    </tr>
+                    <% 
+                        }
+                    %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function searchMessages() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.querySelector(".search-box");
+            filter = input.value.toUpperCase();
+            table = document.querySelector(".table");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 1; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td");
+                for (var j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            tr[i].style.display = "";
+                            break;
+                        } else {
+                            tr[i].style.display = "none";
+                        }
+                    }
+                }
+            }
+        }
+
+        function viewMessage(mid) {
+            window.location.href = 'viewMessage.jsp?mid=' + mid;
+        }
+    </script>
+</body>
+</html>
+

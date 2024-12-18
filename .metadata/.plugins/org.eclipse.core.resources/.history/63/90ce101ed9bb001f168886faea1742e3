@@ -1,0 +1,166 @@
+package dao;
+
+import model.Hotel;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import connecteur.MySQLConnectionTest; // Assurez-vous que vous avez une classe pour la connexion MySQL
+
+public class HotelDAO {
+
+    private Connection connection;
+
+    // Constructeur avec connexion
+    public HotelDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    // Constructeur sans connexion
+    public HotelDAO() {
+        try {
+            // Initialiser la connexion ici si nécessaire
+            this.connection = MySQLConnectionTest.getConnection(); // Assurez-vous que cette méthode retourne une connexion valide
+        } catch (SQLException e) {
+            e.printStackTrace(); // Gérer l'exception de connexion
+        }
+    }
+
+    // Méthode pour rechercher des hôtels
+    public List<Hotel> searchHotels(String city, int stars) throws SQLException {
+        List<Hotel> hotels = new ArrayList<>();
+        String query = "SELECT * FROM hotel WHERE city LIKE ? AND stars = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, "%" + city + "%");
+            stmt.setInt(2, stars);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Hotel hotel = new Hotel(
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("city"),
+                    rs.getInt("stars"),
+                    rs.getString("description"),
+                    rs.getString("image"),
+                    rs.getInt("agent_id")
+                );
+                hotels.add(hotel);
+            }
+        }
+        return hotels;
+    }
+
+    // Méthode pour ajouter un hôtel dans la base de données
+    public void addHotel(Hotel hotel) {
+        String query = "INSERT INTO hotel (name, city, stars, description, image, agent_id) VALUES (?, ?, ?, ?, ?, ?)";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            // Lier les valeurs du modèle Hotel avec les paramètres de la requête SQL
+            stmt.setString(1, hotel.getName());
+            stmt.setString(2, hotel.getCity());
+            stmt.setInt(3, hotel.getStars());
+            stmt.setString(4, hotel.getDescription());
+            stmt.setString(5, hotel.getImage());
+            stmt.setInt(6, hotel.getAgentId());
+
+            // Exécution de la requête d'insertion
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace(); // Gérer l'exception (ou la logger)
+        }
+    }
+
+    // Méthode pour supprimer un hôtel de la base de données
+    public void deleteHotel(int id) {
+        String query = "DELETE FROM hotel WHERE id = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            // Lier l'ID de l'hôtel à la requête SQL
+            stmt.setInt(1, id);
+            
+            // Exécuter la requête de suppression
+            int rowsAffected = stmt.executeUpdate();
+            
+            // Vous pouvez vérifier si une ligne a été supprimée (optionnel)
+            if (rowsAffected > 0) {
+                System.out.println("Hotel with ID " + id + " was deleted successfully.");
+            } else {
+                System.out.println("No hotel found with ID " + id);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // Gérer l'exception (ou la logger)
+        }
+    }
+
+    // Optionnel : Méthode pour fermer la connexion à la base de données si nécessaire
+    public void close() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateHotel(Hotel hotel) {
+        String query = "UPDATE hotel SET name = ?, city = ?, stars = ?, description = ?, image = ?, agent_id = ? WHERE id = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            // Lier les paramètres à la requête SQL
+            stmt.setString(1, hotel.getName());
+            stmt.setString(2, hotel.getCity());
+            stmt.setInt(3, hotel.getStars());
+            stmt.setString(4, hotel.getDescription());
+            stmt.setString(5, hotel.getImage());
+            stmt.setInt(6, hotel.getAgentId());
+            stmt.setInt(7, hotel.getId());
+            
+            // Exécuter la mise à jour
+            int rowsUpdated = stmt.executeUpdate();
+            
+            // Afficher un message de confirmation ou gérer l'absence de mise à jour
+            if (rowsUpdated > 0) {
+                System.out.println("Hotel updated successfully!");
+            } else {
+                System.out.println("No hotel found with the given ID.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Hotel getHotelById(int hotelId) {
+        // Déclaration de la requête SQL pour récupérer l'hôtel par son ID
+        String query = "SELECT * FROM hotel WHERE id = ?";
+        
+        // Déclaration de l'objet Hotel qui sera renvoyé
+        Hotel hotel = null;
+        
+        // Exécution de la requête SQL
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            // Lier l'ID de l'hôtel à la requête SQL
+            stmt.setInt(1, hotelId);
+            
+            // Exécuter la requête
+            ResultSet rs = stmt.executeQuery();
+            
+            // Si un hôtel est trouvé, on crée un objet Hotel à partir des résultats de la requête
+            if (rs.next()) {
+                hotel = new Hotel(
+                    rs.getInt("id"),          // Récupérer l'ID
+                    rs.getString("name"),     // Récupérer le nom de l'hôtel
+                    rs.getString("city"),     // Récupérer la ville
+                    rs.getInt("stars"),       // Récupérer le nombre d'étoiles
+                    rs.getString("description"), // Récupérer la description
+                    rs.getString("image"),    // Récupérer l'image
+                    rs.getInt("agent_id")     // Récupérer l'ID de l'agent
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();  // Gérer l'exception SQL en affichant la pile d'erreur
+        }
+        
+        // Retourner l'objet Hotel trouvé ou null si aucun hôtel n'a été trouvé
+        return hotel;
+    }
+}

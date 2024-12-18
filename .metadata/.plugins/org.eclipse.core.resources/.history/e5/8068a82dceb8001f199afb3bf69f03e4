@@ -1,0 +1,222 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page import="java.util.*, java.sql.*" %>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des agents</title>
+
+    <style>
+        /* Style général */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container {
+            margin-bottom: 30px;
+        }
+
+        .form-container input[type="text"],
+        .form-container input[type="password"] {
+            width: 300px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .form-container button {
+            padding: 10px 20px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #357ae8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4285f4;
+            color: white;
+        }
+
+        a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .actions a {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Gestion des agents</h1>
+
+        <!-- Formulaire pour créer ou modifier un agent -->
+        <div class="form-container">
+            <h2>Créer / Modifier un agent</h2>
+            <form method="post" action="agent.jsp">
+                <input type="hidden" name="agentId" value="${agent.id}">
+                <input type="text" name="username" id="username" value="${agent.username}" placeholder="Nom d'utilisateur" required><br><br>
+                <input type="password" name="password" id="password" value="${agent.password}" placeholder="Mot de passe" required><br><br>
+                <button type="submit" name="action" value="save">Sauvegarder</button>
+            </form>
+        </div>
+
+        <!-- Table des agents existants -->
+        <h2>Liste des agents</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom d'utilisateur</th>
+                    <th>Mot de passe</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:forEach var="agent" items="${agents}">
+                    <tr>
+                        <td>${agent.id}</td>
+                        <td>${agent.username}</td>
+                        <td>${agent.password}</td>
+                        <td class="actions">
+                            <a href="agent.jsp?action=edit&id=${agent.id}">Modifier</a>
+                            <a href="agent.jsp?action=delete&id=${agent.id}" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet agent ?')">Supprimer</a>
+                        </td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
+    </div>
+
+    <%
+        // Connexion à la base de données des administrateurs et des agents
+        String adminDbUrl = "jdbc:mysql://localhost:3306/admin_db";
+        String agentDbUrl = "jdbc:mysql://localhost:3306/agent_db";
+        String user = "root";
+        String pass = "your_password";
+        Connection adminConn = null, agentConn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            // Connexion à la base de données des administrateurs
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            adminConn = DriverManager.getConnection(adminDbUrl, user, pass);
+            agentConn = DriverManager.getConnection(agentDbUrl, user, pass);
+            stmt = adminConn.createStatement();
+
+            // Gérer l'ajout, la mise à jour ou la suppression d'agents
+            String action = request.getParameter("action");
+
+            if ("save".equals(action)) {
+                String username = request.getParameter("username");
+                String password = request.getParameter("password");
+                String agentId = request.getParameter("agentId");
+
+                if (agentId != null && !agentId.isEmpty()) {
+                    // Mise à jour de l'agent dans la base des agents
+                    String updateSQL = "UPDATE agents SET username = ?, password = ? WHERE id = ?";
+                    PreparedStatement ps = agentConn.prepareStatement(updateSQL);
+                    ps.setString(1, username);
+                    ps.setString(2, password);
+                    ps.setInt(3, Integer.parseInt(agentId));
+                    ps.executeUpdate();
+                } else {
+                    // Création d'un nouvel agent dans la base des agents
+                    String insertSQL = "INSERT INTO agents (username, password) VALUES (?, ?)";
+                    PreparedStatement ps = agentConn.prepareStatement(insertSQL);
+                    ps.setString(1, username);
+                    ps.setString(2, password);
+                    ps.executeUpdate();
+                }
+                response.sendRedirect("agent.jsp");
+            } else if ("delete".equals(action)) {
+                String agentId = request.getParameter("id");
+                String deleteSQL = "DELETE FROM agents WHERE id = ?";
+                PreparedStatement ps = agentConn.prepareStatement(deleteSQL);
+                ps.setInt(1, Integer.parseInt(agentId));
+                ps.executeUpdate();
+                response.sendRedirect("agent.jsp");
+            } else if ("edit".equals(action)) {
+                String agentId = request.getParameter("id");
+                String selectSQL = "SELECT * FROM agents WHERE id = ?";
+                PreparedStatement ps = agentConn.prepareStatement(selectSQL);
+                ps.setInt(1, Integer.parseInt(agentId));
+                rs = ps.executeQuery();
+                if (rs.next()) {
+                    request.setAttribute("agent", rs);
+                }
+            }
+
+            // Affichage des agents dans la table
+            String selectAllSQL = "SELECT * FROM agents";
+            rs = stmt.executeQuery(selectAllSQL);
+            List<Map<String, String>> agentsList = new ArrayList<>();
+            while (rs.next()) {
+                Map<String, String> agent = new HashMap<>();
+                agent.put("id", rs.getString("id"));
+                agent.put("username", rs.getString("username"));
+                agent.put("password", rs.getString("password"));
+                agentsList.add(agent);
+            }
+            request.setAttribute("agents", agentsList);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                if (adminConn != null) adminConn.close();
+                if (agentConn != null) agentConn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    %>
+
+</body>
+</html>

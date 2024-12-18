@@ -1,0 +1,224 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+<%@ page import="java.sql.*, com.mysql.cj.jdbc.Driver" errorPage="error.jsp" %>
+<%!
+    PreparedStatement pst;
+    ResultSet rs;
+%>
+<%
+    // Déclaration de la variable pour la connexion
+    Connection conn = null;
+
+    try {
+        // Informations de connexion à la base de données
+        String url = "jdbc:mysql://localhost:3306/hotel_management";  // Remplacez par votre base de données
+        String user = "root";  // Remplacez par votre nom d'utilisateur MySQL
+        String password = "triki";  // Remplacez par votre mot de passe MySQL
+
+        // Charger le driver JDBC pour MySQL
+        Class.forName("com.mysql.cj.jdbc.Driver");
+
+        // Établir la connexion
+        conn = DriverManager.getConnection(url, user, password);
+        
+        // Vérifier si la connexion a échoué
+        if (conn == null) {
+            out.println("<script>alert('Database connection error!'); window.location.href='error.jsp';</script>");
+            return;
+        }
+    } catch (SQLException | ClassNotFoundException e) {
+        // Afficher les erreurs dans la console et rediriger en cas d'échec
+        e.printStackTrace();
+        out.println("<script>alert('Error connecting to the database!'); window.location.href='error.jsp';</script>");
+        return;
+    }
+
+    // Variables pour l'édition du type de chambre
+    String id = request.getParameter("id");
+    String label = "";
+    int capacity = 0;
+    int price = 0;
+
+    // Récupérer les détails du type de chambre si l'ID est présent
+    try {
+        if (id != null) {
+            String sql = "SELECT * FROM RoomType WHERE id = ?";
+            pst = conn.prepareStatement(sql);
+            pst.setInt(1, Integer.parseInt(id));
+            rs = pst.executeQuery();
+
+            if (rs.next()) {
+                label = rs.getString("label");
+                capacity = rs.getInt("capacity");
+                price = rs.getInt("price");
+            } else {
+                out.println("<script>alert('No room found with the given ID!'); window.location.href='error.jsp';</script>");
+                return;
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        out.println("<script>alert('Error retrieving room data!'); window.location.href='error.jsp';</script>");
+        return;
+    }
+
+    // Mise à jour des informations du type de chambre
+    if (request.getParameter("update") != null) {
+        try {
+            label = request.getParameter("label");
+            capacity = Integer.parseInt(request.getParameter("capacity"));
+            price = Integer.parseInt(request.getParameter("price"));
+
+            // Validation des entrées
+            if (label == null || label.isEmpty() || capacity <= 0 || price <= 0) {
+                out.println("<script>alert('Invalid input data!'); window.location.href='error.jsp';</script>");
+                return;
+            }
+
+            String updateSql = "UPDATE RoomType SET label = ?, capacity = ?, price = ? WHERE id = ?";
+            pst = conn.prepareStatement(updateSql);
+            pst.setString(1, label);
+            pst.setInt(2, capacity);
+            pst.setInt(3, price);
+            pst.setInt(4, Integer.parseInt(id));
+
+            int i = pst.executeUpdate();
+            if (i > 0) {
+                out.println("<script>alert('Room Type Updated'); window.location.href='roomtypes.jsp';</script>");
+            } else {
+                out.println("<script>alert('Error updating the room type! Please try again.');</script>");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            out.println("<script>alert('Error updating room data!'); window.location.href='error.jsp';</script>");
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            out.println("<script>alert('Invalid number format!'); window.location.href='error.jsp';</script>");
+        }
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Room Type</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        h2 {
+            color: #4CAF50;
+            margin-top: 40px;
+            font-size: 22px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 16px;
+            color: #333;
+        }
+
+        input {
+            padding: 12px;
+            width: 100%;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            padding: 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+
+        .success {
+            color: green;
+            font-size: 16px;
+        }
+
+        .message-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Edit Room Type</h1>
+
+    <div class="message-container">
+        <c:if test="${not empty successMessage}">
+            <div class="success">${successMessage}</div>
+        </c:if>
+        <c:if test="${not empty errorMessage}">
+            <div class="error">${errorMessage}</div>
+        </c:if>
+    </div>
+
+    <!-- Form for editing room type -->
+    <form method="post">
+        <div class="form-group">
+            <label>Label</label>
+            <input type="text" name="label" value="<%= label %>" required />
+        </div>
+
+        <div class="form-group">
+            <label>Capacity</label>
+            <input type="number" name="capacity" value="<%= capacity %>" required />
+        </div>
+
+        <div class="form-group">
+            <label>Price</label>
+            <input type="number" name="price" value="<%= price %>" required />
+        </div>
+
+        <button type="submit" name="update">Update Room Type</button>
+    </form>
+</div>
+
+</body>
+</html>

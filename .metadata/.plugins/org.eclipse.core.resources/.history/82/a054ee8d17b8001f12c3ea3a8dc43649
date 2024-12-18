@@ -1,0 +1,52 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Hotel Management</title>
+    <!-- Ajout de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-5 shadow-lg">
+        <div class="container mx-auto text-center">
+            <h1 class="text-3xl font-bold">Welcome to the Hotel Management System</h1>
+            <p class="mt-2 text-lg">Efficiently manage your rooms, accounts, and services</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-blue-500 text-white py-3">
+        <div class="container mx-auto text-center">
+            <ul class="flex justify-center space-x-6">
+                <li><a href="rooms.jsp" class="hover:bg-blue-700 px-4 py-2 rounded-md transition">Rooms</a></li>
+                <li><a href="accounts.jsp" class="hover:bg-blue-700 px-4 py-2 rounded-md transition">Accounts</a></li>
+                <li><a href="services.jsp" class="hover:bg-blue-700 px-4 py-2 rounded-md transition">Services</a></li>
+                <li><a href="contact.jsp" class="hover:bg-blue-700 px-4 py-2 rounded-md transition">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-8">
+        <section class="text-center">
+            <h2 class="text-4xl font-semibold text-gray-800">Welcome to our Hotel Management System</h2>
+            <p class="mt-4 text-xl text-gray-600">Here, you can manage rooms, accounts, and services efficiently with an easy-to-use interface.</p>
+            <div class="mt-8">
+                <a href="rooms.jsp" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">Explore Rooms</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-blue-600 text-white py-4 mt-10">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2024 Hotel Management System. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,150 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%> 
+<%@ page import="java.sql.*" %>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hotel Management - Profit</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        #page-wrapper {
+            padding: 20px;
+            background-color: #fff;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .btn:hover {
+            background-color: #0b7dda;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-input {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .table th, .table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        .table th {
+            background-color: #2196F3;
+            color: white;
+        }
+        .table-striped tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div id="page-wrapper">
+        <h1>Room Details</h1>
+
+        <!-- Bouton pour ajouter une chambre -->
+        <a href="addRoom.jsp" class="btn">Add Room</a>
+
+        <!-- Barre de recherche -->
+        <div class="search-container">
+            <form method="get" action="profit.jsp">
+                <input type="text" name="search" class="search-input" placeholder="Search by Room Type" />
+                <button type="submit" class="btn">Search</button>
+            </form>
+        </div>
+
+        <!-- Table des résultats -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Room Type</th>
+                    <th>Capacity</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <%
+                    String searchParam = request.getParameter("search");
+                    String url = "jdbc:mysql://localhost:3306/hotel_management";
+                    String user = "root";
+                    String password = "triki";
+
+                    Connection conn = null;
+                    PreparedStatement stmt = null;
+                    ResultSet rs = null;
+
+                    try {
+                        Class.forName("com.mysql.cj.jdbc.Driver");
+                        conn = DriverManager.getConnection(url, user, password);
+
+                        // Condition de filtrage
+                        String sql = "SELECT id, label, capacity, price FROM RoomType";
+                        if (searchParam != null && !searchParam.isEmpty()) {
+                            sql += " WHERE label LIKE ?";
+                        }
+
+                        stmt = conn.prepareStatement(sql);
+
+                        // Appliquer le critère de recherche s'il est présent
+                        if (searchParam != null && !searchParam.isEmpty()) {
+                            stmt.setString(1, "%" + searchParam + "%");
+                        }
+
+                        rs = stmt.executeQuery();
+
+                        while (rs.next()) {
+                            int id = rs.getInt("id");
+                            String label = rs.getString("label");
+                            int capacity = rs.getInt("capacity");
+                            double price = rs.getDouble("price");
+                %>
+                <tr>
+                    <td><%= id %></td>
+                    <td><%= label %></td>
+                    <td><%= capacity %></td>
+                    <td><%= price %></td>
+                    <td>
+                        <a href="editRoom.jsp?id=<%= id %>" class="btn">Update</a>
+                        <a href="deleteRoom.jsp?id=<%= id %>" class="btn">Delete</a>
+                    </td>
+                </tr>
+                <%
+                        }
+                    } catch (SQLException | ClassNotFoundException e) {
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            if (rs != null) rs.close();
+                            if (stmt != null) stmt.close();
+                            if (conn != null) conn.close();
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

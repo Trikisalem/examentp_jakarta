@@ -1,0 +1,37 @@
+package com.controller;
+
+package web;
+
+import com.model.RoomType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import service.RoomTypeService;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/room-types")
+public class RoomTypeController {
+
+    @Autowired
+    private RoomTypeService roomTypeService;
+
+    // Endpoint pour obtenir tous les types de chambres
+    @GetMapping
+    public List<RoomType> getAllRoomTypes() {
+        return roomTypeService.getAllRoomTypes();
+    }
+
+    // Endpoint pour ajouter un nouveau type de chambre
+    @PostMapping
+    public RoomType addRoomType(@RequestBody RoomType roomType) {
+        return roomTypeService.addRoomType(roomType);
+    }
+
+    // Endpoint pour supprimer un type de chambre par type
+    @DeleteMapping("/{type}")
+    public String deleteRoomType(@PathVariable String type) {
+        roomTypeService.deleteRoomTypeByType(type);
+        return "Room type '" + type + "' deleted successfully!";
+    }
+}

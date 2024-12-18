@@ -1,0 +1,65 @@
+package com.dao;
+
+
+import com.model.Hotel;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class HotelDAO {
+
+    private Connection connection;
+
+    // Constructor to initialize the database connection
+    public HotelDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    // Create a new hotel
+    public boolean createHotel(Hotel hotel) {
+        String sql = "INSERT INTO Hotel (name, city, stars, description, image) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, hotel.getName());
+            statement.setString(2, hotel.getCity());
+            statement.setInt(3, hotel.getStars());
+            statement.setString(4, hotel.getDescription());
+            statement.setString(5, hotel.getImage());
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Retrieve all hotels
+    public List<Hotel> getAllHotels() {
+        List<Hotel> hotels = new ArrayList<>();
+        String sql = "SELECT * FROM Hotel";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Hotel hotel = new Hotel();
+                hotel.setId(resultSet.getInt("id"));
+                hotel.setName(resultSet.getString("name"));
+                hotel.setCity(resultSet.getString("city"));
+                hotel.setStars(resultSet.getInt("stars"));
+                hotel.setDescription(resultSet.getString("description"));
+                hotel.setImage(resultSet.getString("image"));
+                hotels.add(hotel);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return hotels;
+    }
+
+    // Retrieve a hotel by ID
+    public Hotel getHotelById(int id) {
+        String sql = "SELECT * FROM Hotel WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (result
+

@@ -1,0 +1,76 @@
+package servlet;
+
+import dao.HotelDAO;
+import model.Hotel;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import connecteur.MySQLConnectionTest;
+
+@WebServlet("/updateHotel")
+public class UpdateHotelServlet extends HttpServlet {
+
+    private HotelDAO hotelDAO;
+
+    // Initialisation de la servlet avec la connexion à la base de données
+    @Override
+    public void init() throws ServletException {
+        // Obtention de la connexion à la base de données (en supposant qu'il existe une classe DBConnect)
+        Connection connection = null;
+		try {
+			connection = MySQLConnectionTest.getConnection();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        hotelDAO = new HotelDAO(connection);
+    }
+
+    // Gestion de la requête GET pour afficher le formulaire de mise à jour d'un hôtel
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupérer l'ID de l'hôtel à mettre à jour depuis les paramètres de la requête
+        int hotelId = Integer.parseInt(request.getParameter("id"));
+        
+        // Récupérer l'hôtel à partir de l'ID
+        Hotel hotel = hotelDAO.getHotelById(hotelId);
+        
+        // Vérifier si l'hôtel existe
+        if (hotel != null) {
+            // Passer l'objet hôtel à la page JSP pour préremplir le formulaire
+            request.setAttribute("hotel", hotel);
+            request.getRequestDispatcher("/updateHotelForm.jsp").forward(request, response);
+        } else {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Hotel not found");
+        }
+    }
+
+    // Gestion de la requête POST pour traiter la mise à jour de l'hôtel
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupérer les paramètres du formulaire
+        int hotelId = Integer.parseInt(request.getParameter("id"));
+        String name = request.getParameter("name");
+        String city = request.getParameter("city");
+        int stars = Integer.parseInt(request.getParameter("stars"));
+        String description = request.getParameter("description");
+        String image = request.getParameter("image");
+        int agentId = Integer.parseInt(request.getParameter("agent_id"));
+        
+        // Créer un objet Hotel avec les nouvelles données
+        Hotel hotel = new Hotel(hotelId, name, city, stars, description, image, agentId);
+        
+        // Mettre à jour l'hôtel dans la base de données
+        hotelDAO.updateHotel(hotel);
+        
+        // Rediriger vers une page de confirmation ou la liste des hôtels
+        response.sendRedirect("hotelList"); // Vous pouvez aussi rediriger vers une page différente
+    }
+}

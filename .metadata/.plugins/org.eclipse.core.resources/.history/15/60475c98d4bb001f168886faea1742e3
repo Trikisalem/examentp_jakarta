@@ -1,0 +1,179 @@
+package dao;
+
+import model.Hotel;
+import connecteur.MySQLConnectionTest; // Importez la classe de connexion
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class HotelDAO {
+
+    private MySQLConnectionTest connection;
+
+    // Constructeur avec connexion
+    public HotelDAO(MySQLConnectionTest connection) {
+        this.connection = connection;
+    }
+
+    // Constructeur sans connexion
+    public HotelDAO() {
+        this.connection = new MySQLConnectionTest();  // Utiliser un objet de connexion par défaut
+    }
+
+    // Méthode pour ajouter un hôtel dans la base de données
+    public void addHotel(Hotel hotel) {
+        String query = "INSERT INTO hotel (name, city, stars, description, image, agent_id) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                System.err.println("Impossible d'établir une connexion à la base de données.");
+                return;  // Sortir de la méthode si la connexion échoue
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, hotel.getName());
+                stmt.setString(2, hotel.getCity());
+                stmt.setInt(3, hotel.getStars());
+                stmt.setString(4, hotel.getDescription());
+                stmt.setString(5, hotel.getImage());
+                stmt.setInt(6, hotel.getAgentId());
+
+                stmt.executeUpdate();
+                System.out.println("Hotel ajouté avec succès !");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Méthode pour supprimer un hôtel dans la base de données
+    public void deleteHotel(int id) {
+        String query = "DELETE FROM hotel WHERE id = ?";
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                System.err.println("Impossible d'établir une connexion à la base de données.");
+                return;
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, id);
+
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    System.out.println("Hotel avec l'ID " + id + " supprimé avec succès.");
+                } else {
+                    System.out.println("Aucun hôtel trouvé avec l'ID " + id);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Méthode pour mettre à jour un hôtel
+    public void updateHotel(Hotel hotel) {
+        String query = "UPDATE hotel SET name = ?, city = ?, stars = ?, description = ?, image = ?, agent_id = ? WHERE id = ?";
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                System.err.println("Impossible d'établir une connexion à la base de données.");
+                return;
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, hotel.getName());
+                stmt.setString(2, hotel.getCity());
+                stmt.setInt(3, hotel.getStars());
+                stmt.setString(4, hotel.getDescription());
+                stmt.setString(5, hotel.getImage());
+                stmt.setInt(6, hotel.getAgentId());
+                stmt.setInt(7, hotel.getId());
+
+                int rowsUpdated = stmt.executeUpdate();
+                if (rowsUpdated > 0) {
+                    System.out.println("Hotel mis à jour avec succès !");
+                } else {
+                    System.out.println("Aucun hôtel trouvé avec l'ID donné.");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Méthode pour obtenir un hôtel par ID
+    public Hotel getHotelById(int hotelId) {
+        String query = "SELECT * FROM hotel WHERE id = ?";
+        Hotel hotel = null;
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                System.err.println("Impossible d'établir une connexion à la base de données.");
+                return null;
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, hotelId);
+
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    hotel = new Hotel(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("city"),
+                        rs.getInt("stars"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getInt("agent_id")
+                    );
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return hotel;
+    }
+
+    // Méthode pour rechercher des hôtels
+    public List<Hotel> searchHotels(String city, int stars) {
+        List<Hotel> hotels = new ArrayList<>();
+        String query = "SELECT * FROM hotel WHERE city LIKE ? AND stars = ?";
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                System.err.println("Impossible d'établir une connexion à la base de données.");
+                return hotels;  // Retourner une liste vide si la connexion échoue
+            }
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, "%" + city + "%");
+                stmt.setInt(2, stars);
+
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Hotel hotel = new Hotel(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("city"),
+                        rs.getInt("stars"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getInt("agent_id")
+                    );
+                    hotels.add(hotel);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return hotels;
+    }
+}

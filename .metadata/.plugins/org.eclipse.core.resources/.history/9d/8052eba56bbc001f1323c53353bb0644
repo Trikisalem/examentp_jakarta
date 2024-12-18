@@ -1,0 +1,116 @@
+<%@ page import="java.sql.*" errorPage="error.jsp" %>
+<%!
+    PreparedStatement pst;
+%>
+<%
+    Connection c = (Connection) application.getAttribute("connection");
+%>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add New Room Type</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+        .form-container {
+            margin: 20px 0;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-container h3 {
+            margin-bottom: 20px;
+        }
+        .form-container input, .form-container textarea {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-container button {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+        .form-container button:hover {
+            background-color: #0b7dda;
+        }
+        .alert {
+            background-color: #f44336;
+            color: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Add New Room Type</h1>
+
+    <!-- Formulaire pour ajouter une chambre -->
+    <div class="form-container">
+        <form method="post">
+            <h3>Add a New Room</h3>
+
+            <div class="form-group">
+                <label>Label</label>
+                <input type="text" name="label" required placeholder="Room Label" />
+            </div>
+
+            <div class="form-group">
+                <label>Capacity</label>
+                <input type="number" name="capacity" required placeholder="Room Capacity" />
+            </div>
+
+            <div class="form-group">
+                <label>Price</label>
+                <input type="number" name="price" required placeholder="Room Price" />
+            </div>
+
+            <button type="submit" name="add">Add Room</button>
+        </form>
+
+        <%
+            if(request.getParameter("add") != null) {
+                String label = request.getParameter("label");
+                String capacity = request.getParameter("capacity");
+                String price = request.getParameter("price");
+
+                // Add the new room type
+                String sql = "INSERT INTO RoomType (label, capacity, price) VALUES (?, ?, ?)";
+                pst = c.prepareStatement(sql);
+                pst.setString(1, label);
+                pst.setInt(2, Integer.parseInt(capacity));
+                pst.setInt(3, Integer.parseInt(price));
+
+                int i = pst.executeUpdate();
+                if (i > 0) {
+                    out.println("<script>alert('New Room Type Added'); window.location.href='roomtypes.jsp';</script>");
+                } else {
+                    out.println("<script>alert('Error! Please try again.');</script>");
+                }
+            }
+        %>
+    </div>
+
+    <script>
+        // Optionally, you can add custom JS validation or interaction here.
+    </script>
+
+</body>
+</html>

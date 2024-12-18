@@ -1,0 +1,221 @@
+<%@ page import="java.sql.*" %>
+<%@ page contentType="text/html; charset=UTF-8"%>
+<%@ page language="java" %>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Booking</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+</head>
+<body>
+    <div id="page-wrapper">
+        <div id="page-inner">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="page-header">
+                        Room Booking <small><%= curdate %></small>
+                    </h1>
+                </div>
+
+                <!-- Confirmation Panel -->
+                <div class="col-md-8 col-sm-8">
+                    <div class="panel panel-info">
+                        <div class="panel-heading">
+                            Booking Confirmation
+                        </div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <tr>
+                                        <th>DESCRIPTION</th>
+                                        <th>INFORMATION</th>
+                                    </tr>
+                                    <tr><th>Name</th><th><%= title %> <%= fname %> <%= lname %></th></tr>
+                                    <tr><th>Email</th><th><%= email %></th></tr>
+                                    <tr><th>Nationality</th><th><%= nat %></th></tr>
+                                    <tr><th>Country</th><th><%= country %></th></tr>
+                                    <tr><th>Phone No</th><th><%= phone %></th></tr>
+                                    <tr><th>Room Type</th><th><%= troom %></th></tr>
+                                    <tr><th>Room Number</th><th><%= nroom %></th></tr>
+                                    <tr><th>Meal Plan</th><th><%= meal %></th></tr>
+                                    <tr><th>Bedding</th><th><%= bed %></th></tr>
+                                    <tr><th>Check-in Date</th><th><%= cin %></th></tr>
+                                    <tr><th>Check-out Date</th><th><%= cout %></th></tr>
+                                    <tr><th>No of days</th><th><%= days %></th></tr>
+                                    <tr><th>Status Level</th><th><%= sta %></th></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="panel-footer">
+                            <form method="post">
+                                <div class="form-group">
+                                    <label>Select the Confirmation</label>
+                                    <select name="conf" class="form-control">
+                                        <option value="">Select</option>
+                                        <option value="Confirm">Confirm</option>
+                                    </select>
+                                </div>
+                                <input type="submit" name="co" value="Confirm" class="btn btn-success">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Available Rooms Panel -->
+                <%
+                // Connexion à la base de données et calcul du nombre de chambres disponibles
+                Connection conn = null;
+                PreparedStatement ps = null;
+                ResultSet rs = null;
+
+                try {
+                    // Connexion à la base de données
+                    Class.forName("com.mysql.cj.jdbc.Driver");
+                    conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hotel", "root", "");
+
+                    // Calcul des chambres disponibles
+                    String rsql = "SELECT * FROM room";
+                    ps = conn.prepareStatement(rsql);
+                    rs = ps.executeQuery();
+
+                    int r = 0, sc = 0, gh = 0, sr = 0, dr = 0;
+                    while (rs.next()) {
+                        r++;
+                        String s = rs.getString("type");
+                        if ("Superior Room".equals(s)) sc++;
+                        else if ("Guest House".equals(s)) gh++;
+                        else if ("Single Room".equals(s)) sr++;
+                        else if ("Deluxe Room".equals(s)) dr++;
+                    }
+
+                    // Calcul des chambres réservées
+                    String csql = "SELECT * FROM payment";
+                    ps = conn.prepareStatement(csql);
+                    rs = ps.executeQuery();
+                    int cr = 0, csc = 0, cgh = 0, csr = 0, cdr = 0;
+                    while (rs.next()) {
+                        cr++;
+                        String cs = rs.getString("troom");
+                        if ("Superior Room".equals(cs)) csc++;
+                        else if ("Guest House".equals(cs)) cgh++;
+                        else if ("Single Room".equals(cs)) csr++;
+                        else if ("Deluxe Room".equals(cs)) cdr++;
+                    }
+
+                    // Affichage du nombre de chambres disponibles
+                %>
+                <div class="col-md-4 col-sm-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Available Room Details
+                        </div>
+                        <div class="panel-body">
+                            <table>
+                                <tr><td><b>Superior Room</b></td><td><%= sc - csc <= 0 ? "NO" : sc - csc %></td></tr>
+                                <tr><td><b>Guest House</b></td><td><%= gh - cgh <= 0 ? "NO" : gh - cgh %></td></tr>
+                                <tr><td><b>Single Room</b></td><td><%= sr - csr <= 0 ? "NO" : sr - csr %></td></tr>
+                                <tr><td><b>Deluxe Room</b></td><td><%= dr - cdr <= 0 ? "NO" : dr - cdr %></td></tr>
+                                <tr><td><b>Total Rooms</b></td><td><%= r - cr <= 0 ? "NO" : r - cr %></td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <%
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (rs != null) rs.close();
+                        if (ps != null) ps.close();
+                        if (conn != null) conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+                %>
+            </div>
+
+            <% 
+            // Confirmation de la réservation
+            if ("Confirm".equals(request.getParameter("conf"))) {
+                String st = request.getParameter("conf");
+                if ("Confirm".equals(st)) {
+                    String urb = "UPDATE roombook SET stat=? WHERE id=?";
+                    try {
+                        ps = conn.prepareStatement(urb);
+                        ps.setString(1, st);
+                        ps.setInt(2, id);
+                        int updateCount = ps.executeUpdate();
+
+                        // Calcul du prix total
+                        double type_of_room = 0;
+                        if ("Superior Room".equals(troom)) type_of_room = 320;
+                        else if ("Deluxe Room".equals(troom)) type_of_room = 220;
+                        else if ("Guest House".equals(troom)) type_of_room = 180;
+                        else if ("Single Room".equals(troom)) type_of_room = 150;
+
+                        double type_of_bed = (bed.equals("Single")) ? type_of_room * 0.04 :
+                                             (bed.equals("Double")) ? type_of_room * 0.05 :
+                                             (bed.equals("Triple")) ? type_of_room * 0.06 :
+                                             (bed.equals("Quad")) ? type_of_room * 0.07 : 0;
+
+                        double type_of_meal = (meal.equals("Room only")) ? 0 :
+                                             (meal.equals("Breakfast")) ? type_of_bed * 0.4 :
+                                             (meal.equals("Half Board")) ? type_of_bed * 0.5 :
+                                             (meal.equals("Full Board")) ? type_of_bed * 0.6 : 0;
+
+                        double ttot = type_of_room * days * nroom;
+                        double mepr = type_of_meal * days;
+                        double btot = type_of_bed * days;
+                        double fintot = ttot + mepr + btot;
+
+                        // Insertion des détails de paiement
+                        String psql = "INSERT INTO payment(id, title, fname, lname, troom, tbed, nroom, cin, cout, ttot, meal, mepr, btot, fintot, noofdays) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        ps = conn.prepareStatement(psql);
+                        ps.setInt(1, id);
+                        ps.setString(2, title);
+                        ps.setString(3, fname);
+                        ps.setString(4, lname);
+                        ps.setString(5, troom);
+                        ps.setString(6, bed);
+                        ps.setInt(7, nroom);
+                        ps.setString(8, cin);
+                        ps.setString(9, cout);
+                        ps.setDouble(10, ttot);
+                        ps.setString(11, meal);
+                        ps.setDouble(12, mepr);
+                        ps.setDouble(13, btot);
+                        ps.setDouble(14, fintot);
+                        ps.setInt(15, days);
+
+                        int i1 = ps.executeUpdate();
+                        if (i1 > 0) {
+                            // Mise à jour de la chambre comme non disponible
+                            String rpsql = "UPDATE room SET place='NotFree', cusid=? WHERE bedding=? AND type=?";
+                            ps = conn.prepareStatement(rpsql);
+                            ps.setInt(1, id);
+                            ps.setString(2, bed);
+                            ps.setString(3, troom);
+                            int i2 = ps.executeUpdate();
+                            if (i2 > 0) {
+                                response.sendRedirect("home.jsp");
+                                out.print("<script>alert('Booking Confirmed');</script>");
+                            }
+                        }
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            %>
+        </div>
+    </div>
+
+    <script src="assets/js/jquery-1.10.2.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+</body>
+</html>

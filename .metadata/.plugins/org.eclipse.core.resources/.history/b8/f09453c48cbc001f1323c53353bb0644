@@ -1,0 +1,158 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<%@ page import="java.util.*" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn {
+            padding: 8px 12px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .btn:hover {
+            background-color: #0b7dda;
+        }
+        .search-container {
+            margin: 20px 0;
+        }
+        .search-container input {
+            padding: 8px;
+            width: 300px;
+            margin-right: 5px;
+        }
+        .search-container button {
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            cursor: pointer;
+        }
+        .search-container button:hover {
+            background-color: #0b7dda;
+        }
+        .add-hotel-container {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Hotel Management</h1>
+
+<!-- Bouton Add Hotel -->
+<div class="add-hotel-container">
+    <a href="addhotel.jsp" class="btn">Add Hotel</a>
+</div>
+
+<!-- Formulaire de recherche -->
+<div class="search-container">
+    <form method="get" action="hotel.jsp">
+        <input type="text" name="search" placeholder="Search by Name or City" 
+               value="<%= request.getParameter("search") != null ? request.getParameter("search") : "" %>">
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+<!-- Table pour afficher les hôtels -->
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>City</th>
+            <th>Stars</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <%
+            String url = "jdbc:mysql://localhost:3306/hotel_management";
+            String user = "root";
+            String password = "triki";
+            Connection conn = null;
+            PreparedStatement stmt = null;
+            ResultSet rs = null;
+
+            // Récupérer le critère de recherche
+            String searchParam = request.getParameter("search");
+            String query;
+
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                conn = DriverManager.getConnection(url, user, password);
+
+                if (searchParam != null && !searchParam.trim().isEmpty()) {
+                    // Requête filtrée si un critère est fourni
+                    query = "SELECT * FROM Hotel WHERE name LIKE ? OR city LIKE ?";
+                    stmt = conn.prepareStatement(query);
+                    stmt.setString(1, "%" + searchParam + "%");
+                    stmt.setString(2, "%" + searchParam + "%");
+                } else {
+                    // Requête par défaut sans filtre
+                    query = "SELECT * FROM Hotel";
+                    stmt = conn.prepareStatement(query);
+                }
+
+                rs = stmt.executeQuery();
+
+                while (rs.next()) {
+                    int id = rs.getInt("id");
+                    String name = rs.getString("name");
+                    String city = rs.getString("city");
+                    int stars = rs.getInt("stars");
+                    String description = rs.getString("description");
+        %>
+        <tr>
+            <td><%= id %></td>
+            <td><%= name %></td>
+            <td><%= city %></td>
+            <td><%= stars %></td>
+            <td><%= description %></td>
+            <td>
+                <a href="editHotel.jsp?id=<%= id %>" class="btn">Edit</a>
+                <a href="deleteHotel.jsp?id=<%= id %>" class="btn">Delete</a>
+            </td>
+        </tr>
+        <%
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            }
+        %>
+    </tbody>
+</table>
+
+</body>
+</html>

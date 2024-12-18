@@ -1,0 +1,25 @@
+<%@ page import="java.sql.*" errorPage="error.jsp" %>
+<%!
+    PreparedStatement pst;
+%>
+<%
+    Connection c = (Connection) application.getAttribute("connection");
+    String roomId = request.getParameter("id");
+
+    if (roomId != null) {
+        try {
+            // SQL query to delete a room type by ID
+            String deleteSql = "DELETE FROM RoomType WHERE id = ?";
+            pst = c.prepareStatement(deleteSql);
+            pst.setInt(1, Integer.parseInt(roomId));
+            int rowsDeleted = pst.executeUpdate();
+            if (rowsDeleted > 0) {
+                response.sendRedirect("roomtypes.jsp"); // Redirect to the room types page after deletion
+            } else {
+                out.println("<script>alert('Error! Room Type not found.');</script>");
+            }
+        } catch (SQLException e) {
+            out.println("<script>alert('Database Error: " + e.getMessage() + "');</script>");
+        }
+    }
+%>

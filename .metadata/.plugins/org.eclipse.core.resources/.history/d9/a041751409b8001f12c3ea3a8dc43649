@@ -1,0 +1,129 @@
+package com.dao;
+
+
+
+import com.model.Account;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AccountDAO {
+
+    private Connection connection;
+
+    // Constructor to initialize the database connection
+    public AccountDAO(Connection connection) {
+        this.connection = connection;
+    }
+
+    // Create a new account
+    public boolean createAccount(Account account) {
+        String sql = "INSERT INTO Account (username, password, email, role) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, account.getUsername());
+            statement.setString(2, account.getPassword());
+            statement.setString(3, account.getEmail());
+            statement.setString(4, account.getRole());
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Retrieve all accounts
+    public List<Account> getAllAccounts() {
+        List<Account> accounts = new ArrayList<>();
+        String sql = "SELECT * FROM Account";
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                Account account = new Account();
+                account.setId(resultSet.getInt("id"));
+                account.setUsername(resultSet.getString("username"));
+                account.setPassword(resultSet.getString("password"));
+                account.setEmail(resultSet.getString("email"));
+                account.setRole(resultSet.getString("role"));
+                accounts.add(account);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return accounts;
+    }
+
+    // Retrieve an account by ID
+    public Account getAccountById(int id) {
+        String sql = "SELECT * FROM Account WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    Account account = new Account();
+                    account.setId(resultSet.getInt("id"));
+                    account.setUsername(resultSet.getString("username"));
+                    account.setPassword(resultSet.getString("password"));
+                    account.setEmail(resultSet.getString("email"));
+                    account.setRole(resultSet.getString("role"));
+                    return account;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // Update an account
+    public boolean updateAccount(Account account) {
+        String sql = "UPDATE Account SET username = ?, password = ?, email = ?, role = ? WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, account.getUsername());
+            statement.setString(2, account.getPassword());
+            statement.setString(3, account.getEmail());
+            statement.setString(4, account.getRole());
+            statement.setInt(5, account.getId());
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Delete an account by ID
+    public boolean deleteAccount(int id) {
+        String sql = "DELETE FROM Account WHERE id = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Authenticate an account (check username and password)
+    public Account authenticate(String username, String password) {
+        String sql = "SELECT * FROM Account WHERE username = ? AND password = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, username);
+            statement.setString(2, password);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    Account account = new Account();
+                    account.setId(resultSet.getInt("id"));
+                    account.setUsername(resultSet.getString("username"));
+                    account.setPassword(resultSet.getString("password"));
+                    account.setEmail(resultSet.getString("email"));
+                    account.setRole(resultSet.getString("role"));
+                    return account;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}

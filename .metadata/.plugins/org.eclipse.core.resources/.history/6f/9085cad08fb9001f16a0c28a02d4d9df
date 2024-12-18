@@ -1,0 +1,181 @@
+<%@ page import="java.sql.*, java.time.LocalDate, java.time.format.DateTimeFormatter, java.time.temporal.ChronoUnit;" %>
+
+<%
+    // Initialisation des variables
+    String checkIn = request.getParameter("check_in");
+    String checkOut = request.getParameter("check_out");
+    String roomType = request.getParameter("room_type");
+    double pricePerNight = 0.0;
+    double totalAmount = 0.0;
+    long diffInDays = 0;
+
+    // Vérification des dates de séjour
+    if (checkIn != null && checkOut != null) {
+        try {
+            // Utilisation du DateTimeFormatter pour analyser les dates
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            // Conversion des dates de String à LocalDate
+            LocalDate checkInLocalDate = LocalDate.parse(checkIn, formatter);
+            LocalDate checkOutLocalDate = LocalDate.parse(checkOut, formatter);
+
+            // Calcul de la différence en jours entre les dates d'arrivée et de départ
+            diffInDays = ChronoUnit.DAYS.between(checkInLocalDate, checkOutLocalDate);
+
+            // Vérification que la date de départ est après la date d'arrivée
+            if (diffInDays > 0) {
+                // Calcul du montant total
+                if (roomType != null) {
+                    switch (roomType) {
+                        case "Chambre vue jardin":
+                            pricePerNight = 100.0;
+                            break;
+                        case "Chambre vue de mer":
+                            pricePerNight = 180.0;
+                            break;
+                        case "Bungalow":
+                            pricePerNight = 250.0;
+                            break;
+                        default:
+                            out.println("Type de chambre non valide.");
+                            break;
+                    }
+                }
+                totalAmount = diffInDays * pricePerNight;
+            } else {
+                out.println("La date de départ doit être après la date d'arrivée.");
+            }
+        } catch (Exception e) {
+            out.println("Erreur lors du calcul des dates : " + e.getMessage());
+        }
+    }
+
+    // Insertion de la réservation dans la base de données si tous les paramètres sont valides
+    if (checkIn != null && checkOut != null && roomType != null && pricePerNight > 0 && totalAmount > 0) {
+        String insertSQL = "INSERT INTO Reservation (guest_first_name, guest_last_name, guest_email, guest_phone, check_in_date, check_out_date, room_type_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        
+        // Connexion à la base de données et insertion des données
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hotel_management", "root", "password");
+             PreparedStatement stmt = conn.prepareStatement(insertSQL)) {
+
+            // Informations du client (dans un cas réel, ces données seraient dynamiques)
+            stmt.setString(1, "Jean");  // Prénom
+            stmt.setString(2, "Dupont");  // Nom
+            stmt.setString(3, "jean.dupont@example.com");  // Email
+            stmt.setString(4, "0123456789");  // Numéro de téléphone
+            stmt.setString(5, checkIn);  // Date d'arrivée
+            stmt.setString(6, checkOut);  // Date de départ
+
+            // Recherche de l'ID du type de chambre dans la base
+            String roomTypeQuery = "SELECT id FROM RoomType WHERE label = ? LIMIT 1";
+            try (PreparedStatement roomStmt = conn.prepareStatement(roomTypeQuery)) {
+                roomStmt.setString(1, roomType);
+                try (ResultSet rs = roomStmt.executeQuery()) {
+                    if (rs.next()) {
+                        int roomTypeId = rs.getInt("id");
+                        stmt.setInt(7, roomTypeId);  // ID du type de chambre
+
+                        // Exécution de l'insertion
+                        int rowsAffected = stmt.executeUpdate();
+                        if (rowsAffected > 0) {
+                            out.println("Réservation effectuée avec succès !<br>");
+                            out.println("Détails de la réservation :<br>");
+                            out.println("Nom : Jean Dupont<br>");
+                            out.println("Email : jean.dupont@example.com<br>");
+                            out.println("Type de chambre : " + roomType + "<br>");
+                            out.println("Date d'arrivée : " + checkIn + "<br>");
+                            out.println("Date de départ : " + checkOut + "<br>");
+                            out.println("Prix par nuit : " + pricePerNight + " DT<br>");
+                            out.println("Durée du séjour : " + diffInDays + " jours<br>");
+                            out.println("Montant total : " + totalAmount + " DT<br>");
+                        } else {
+                            out.println("Échec de la réservation.");
+                        }
+                    } else {
+                        out.println("Le type de chambre sélectionné est invalide.");
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            out.println("Erreur lors de l'enregistrement de la réservation : " + e.getMessage());
+        }
+    } else {
+        out.println("Veuillez remplir tous les champs correctement.");
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation d'une chambre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .form-container {
+            width: 50%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-container h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Réservation d'une chambre</h2>
+    <form action="reservation.jsp" method="post">
+        <!-- Champ de sélection du type de chambre -->
+        <label for="room_type">Type de chambre :</label>
+        <select id="room_type" name="room_type" required>
+            <option value="Chambre vue jardin">Chambre vue jardin</option>
+            <option value="Chambre vue de mer">Chambre vue de mer</option>
+            <option value="Bungalow">Bungalow</option>
+        </select>
+
+        <!-- Champs de date -->
+        <label for="check_in">Date d'arrivée :</label>
+        <input type="date" id="check_in" name="check_in" required>
+
+        <label for="check_out">Date de départ :</label>
+        <input type="date" id="check_out" name="check_out" required>
+
+        <button type="submit">Soumettre</button>
+    </form>
+</div>
+
+</body>
+</html>
+
+

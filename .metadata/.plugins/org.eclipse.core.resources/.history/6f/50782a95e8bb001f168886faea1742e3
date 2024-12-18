@@ -1,0 +1,50 @@
+package servlet;
+
+import model.Hotel;
+import dao.HotelDAO;
+import java.io.IOException;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet("/searchHotels")
+public class SearchHotelsServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    // Objet HotelDAO pour interagir avec la base de données
+    private HotelDAO hotelDAO;
+
+    public SearchHotelsServlet() {
+        super();
+        // Initialisation du DAO
+        hotelDAO = new HotelDAO();
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupérer les critères de recherche depuis la requête HTTP
+        String name = request.getParameter("name");
+        String city = request.getParameter("city");
+        String stars = request.getParameter("stars");
+
+        // Vérification que les paramètres ne sont pas nuls ou vides
+        if (name == null) name = "";
+        if (city == null) city = "";
+        if (stars == null) stars = "";
+
+        // Rechercher les hôtels en fonction des critères
+        List<Hotel> hotels = hotelDAO.searchHotels(name, city, stars);
+
+        // Passer les résultats à la JSP pour affichage
+        request.setAttribute("hotels", hotels);
+
+        // Rediriger vers la page JSP pour afficher les résultats
+        request.getRequestDispatcher("searchResults.jsp").forward(request, response);
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        doGet(request, response);
+    }
+}

@@ -1,0 +1,271 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SUNRISE HOTEL - News Letters</title>
+
+    <!-- CSS intégré -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        #wrapper {
+            display: flex;
+            flex-direction: row;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #2196F3;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        /* Sidebar */
+        .navbar-side {
+            background-color: #333;
+            color: white;
+            width: 250px;
+            padding-top: 20px;
+            box-shadow: 4px 0 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-side ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .navbar-side ul li a {
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            display: block;
+            font-size: 16px;
+        }
+
+        .navbar-side ul li a:hover {
+            background-color: #575757;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Main Content Area */
+        #page-wrapper {
+            flex-grow: 1;
+            padding: 30px;
+            background-color: #fff;
+        }
+
+        .table-responsive {
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .table th, .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table th {
+            background-color: #2196F3;
+            color: white;
+            font-size: 16px;
+        }
+
+        .table-striped tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-approve {
+            background-color: #4CAF50;
+        }
+
+        .btn-reject {
+            background-color: #f44336;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .search-box {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        .page-header {
+            font-size: 36px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <nav class="navbar-default navbar-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu">
+                    <li><a href="home.jsp"><i class="fa fa-dashboard"></i> Status</a></li>
+                    <li><a href="messages.jsp" class="active-menu"><i class="fa fa-desktop"></i> News Letters</a></li>
+                    <li><a href="roombook.jsp"><i class="fa fa-bar-chart-o"></i> Room Booking</a></li>
+                    <li><a href="payment.jsp"><i class="fa fa-qrcode"></i> Payment</a></li>
+                    <li><a href="profit.jsp"><i class="fa fa-qrcode"></i> Profit</a></li>
+                    <li><a href="logout.jsp"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="page-wrapper">
+            <div id="page-inner">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="page-header">News Letters Management</h1>
+                    </div>
+                </div>
+
+                <!-- Search Box -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" class="search-box" placeholder="Search News Letters..." onkeyup="searchNewsLetters()">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-bordered table-hover" id="dataTables-example">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Subject</th>
+                                                <th>Message</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>1</td>
+                                                <td>John Doe</td>
+                                                <td>john.doe@example.com</td>
+                                                <td>Hotel Services</td>
+                                                <td>Interested in newsletter</td>
+                                                <td>Not Allowed</td>
+                                                <td>
+                                                    <button class="btn btn-approve" onclick="approveNewsletter(1)">Approve</button>
+                                                    <button class="btn btn-reject" onclick="rejectNewsletter(1)">Reject</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>2</td>
+                                                <td>Jane Smith</td>
+                                                <td>jane.smith@example.com</td>
+                                                <td>Special Offers</td>
+                                                <td>Want to receive updates</td>
+                                                <td>Allowed</td>
+                                                <td>
+                                                    <button class="btn btn-reject" onclick="rejectNewsletter(2)">Revoke</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function searchNewsLetters() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.querySelector(".search-box");
+            filter = input.value.toUpperCase();
+            table = document.querySelector(".table");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td");
+                for (var j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            tr[i].style.display = "";
+                            break;
+                        } else {
+                            tr[i].style.display = "none";
+                        }
+                    }
+                }
+            }
+        }
+
+        function approveNewsletter(id) {
+            alert('Newsletter ' + id + ' approved');
+            // In a real application, this would call a server-side script
+        }
+
+        function rejectNewsletter(id) {
+            alert('Newsletter ' + id + ' rejected');
+            // In a real application, this would call a server-side script
+        }
+    </script>
+</body>
+</html>

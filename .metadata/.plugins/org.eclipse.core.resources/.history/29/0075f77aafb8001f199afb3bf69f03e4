@@ -1,0 +1,163 @@
+<%@page import="java.sql.*" errorPage="error.jsp"%>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administrator</title>
+    <!-- Bootstrap Styles-->
+    <link href="bootstrap.css" rel="stylesheet" />
+    <!-- FontAwesome Styles-->
+    <link href="font-awesome.css" rel="stylesheet" />
+    <!-- Morris Chart Styles-->
+    <link href="morris/morris-0.4.3.min.css" rel="stylesheet" />
+    <!-- Custom Styles-->
+    <link href="custom-styles.css" rel="stylesheet" />
+    <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+</head>
+
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-default top-navbar" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="home.jsp"> <% String un = (String) session.getAttribute("user"); %><%= un %> </a>
+            </div>
+
+            <ul class="nav navbar-top-links navbar-right">
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false">
+                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a href="usersetting.jsp"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                        </li>
+                        <li><a href="settings.jsp"><i class="fa fa-gear fa-fw"></i> Settings</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li><a href="logout.jsp"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+
+        <nav class="navbar-default navbar-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu">
+                    <li><a class="active-menu" href="home.jsp"><i class="fa fa-dashboard"></i> Status</a></li>
+                    <li><a href="messages.jsp"><i class="fa fa-desktop"></i> News Letters</a></li>
+                    <li><a href="roombook.jsp"><i class="fa fa-bar-chart-o"></i> Room Booking</a></li>
+                    <li><a href="payment.jsp"><i class="fa fa-qrcode"></i> Payment</a></li>
+                    <li><a href="profit.jsp"><i class="fa fa-qrcode"></i> Profit</a></li>
+                    <li><a href="logout.jsp"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="page-wrapper">
+            <div id="page-inner">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="page-header">
+                            Status <small>Room Booking </small>
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- Content without database -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                New Room Bookings
+                            </div>
+                            <div class="panel-body">
+                                <button class="btn btn-default" type="button">
+                                    New Room Bookings <span class="badge">0</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-info">
+                            <div class="panel-heading">
+                                Booked Rooms
+                            </div>
+                            <div class="panel-body">
+                                <button class="btn btn-primary" type="button">
+                                    Booked Rooms <span class="badge">0</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Followers Section -->
+                <div class="panel panel-danger">
+                    <div class="panel-heading">
+                        Followers
+                    </div>
+                    <div class="panel-body">
+                        <button class="btn btn-primary" type="button">
+                            Followers <span class="badge">0</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class='panel-body'>
+        <button class='btn btn-primary btn' data-toggle='modal' data-target='#myModal'>
+            Update
+        </button>
+        <div class='modal fade' id='myModal' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' aria-hidden='true'>
+            <div class='modal-dialog'>
+                <div class='modal-content'>
+                    <div class='modal-header'>
+                        <button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
+                        <h4 class='modal-title' id='myModalLabel'>Change the User name and Password</h4>
+                    </div>
+
+                    <form method="post" action="updateProfile.jsp" onsubmit="return validateForm()">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="usname">Modifier le nom d'utilisateur</label>
+                                <input type="text" id="usname" name="usname"
+                                       value="<%= (un != null) ? un.trim() : "" %>" 
+                                       class="form-control" placeholder="Saisir le nom d'utilisateur"
+                                       required minlength="3" maxlength="50" pattern="[A-Za-z0-9_]+"
+                                       title="Uniquement lettres, chiffres et underscores">
+                            </div>
+                            <div class="form-group">
+                                <label for="pasd">Modifier le mot de passe</label>
+                                <input type="password" id="pasd" name="pasd"
+                                       class="form-control" placeholder="Saisir le nouveau mot de passe"
+                                       pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                                       title="Doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre">
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                            <button type="submit" name="up" class="btn btn-primary">Mettre à jour</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+l>

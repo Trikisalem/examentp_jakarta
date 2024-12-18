@@ -1,0 +1,60 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recherche d'hôtels</title>
+    <link rel="stylesheet" href="css/style.css"> <!-- Style CSS si nécessaire -->
+</head>
+<body>
+    <h1>Rechercher un hôtel</h1>
+
+    <!-- Formulaire de recherche -->
+    <form action="SearchHotel" method="post">
+        <label for="city">Ville :</label>
+        <input type="text" id="city" name="city" required>
+
+        <label for="stars">Nombre d'étoiles :</label>
+        <input type="number" id="stars" name="stars" min="1" max="5" required>
+
+        <button type="submit">Rechercher</button>
+    </form>
+
+    <!-- Affichage des résultats de recherche -->
+    <h2>Résultats de la recherche</h2>
+
+    <c:if test="${not empty hotels}">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom de l'hôtel</th>
+                    <th>Ville</th>
+                    <th>Étoiles</th>
+                    <th>Description</th>
+                    <th>Image</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:forEach var="hotel" items="${hotels}">
+                    <tr>
+                        <td>${hotel.name}</td>
+                        <td>${hotel.city}</td>
+                        <td>${hotel.stars}</td>
+                        <td>${hotel.description}</td>
+                        <td><img src="${hotel.image}" alt="${hotel.name}" width="100" height="100"></td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
+    </c:if>
+
+    <!-- Message d'erreur -->
+    <c:if test="${not empty error}">
+        <div style="color: red;">
+            <p>${error}</p>
+        </div>
+    </c:if>
+
+</body>
+</html>

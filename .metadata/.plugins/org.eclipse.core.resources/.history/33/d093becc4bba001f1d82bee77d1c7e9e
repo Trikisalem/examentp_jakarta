@@ -1,0 +1,25 @@
+package servlet;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+import dao.RoomTypeDAO;
+import model.RoomType;
+
+import java.io.*;
+import java.util.List;
+
+public class RoomTypeServlet extends HttpServlet {
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupérer les données de la base de données
+        RoomTypeDAO dao = new RoomTypeDAO();
+        List<RoomType> roomTypes = dao.getRoomTypes();
+
+        // Ajouter les données à la requête
+        request.setAttribute("roomTypes", roomTypes);
+
+        // Rediriger vers la JSP
+        RequestDispatcher dispatcher = request.getRequestDispatcher("roomtypes.jsp");
+        dispatcher.forward(request, response);
+    }
+}

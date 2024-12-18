@@ -1,0 +1,50 @@
+package servlet;
+
+import dao.HotelDAO;
+import model.Hotel;
+
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet("/SearchHotel")
+public class SearchHotel extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    // Instance de HotelDAO
+    private HotelDAO hotelDAO;
+
+    public SearchHotel() {
+        super();
+        hotelDAO = new HotelDAO(); // Initialisation de la DAO
+    }
+
+    // Méthode doGet pour afficher le formulaire de recherche
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.getRequestDispatcher("SearchHotel.jsp").forward(request, response);
+    }
+
+    // Méthode doPost pour traiter la recherche
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String city = request.getParameter("city");
+        int stars = Integer.parseInt(request.getParameter("stars"));
+        
+        try {
+            // Recherche des hôtels en fonction de la ville et du nombre d'étoiles
+            List<Hotel> hotels = hotelDAO.searchHotels(city, stars);
+            request.setAttribute("hotels", hotels); // Ajouter les résultats de recherche à l'attribut de la requête
+        } catch (SQLException e) {
+            e.printStackTrace();
+            request.setAttribute("error", "Une erreur s'est produite lors de la recherche.");
+        }
+        
+        // Rediriger vers la page JSP avec les résultats
+        request.getRequestDispatcher("SearchHotel.jsp").forward(request, response);
+    }
+}

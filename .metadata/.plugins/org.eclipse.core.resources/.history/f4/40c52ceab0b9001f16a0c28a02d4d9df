@@ -1,0 +1,93 @@
+<%@ page import="java.sql.*" errorPage="error.jsp" %>
+<%!
+    PreparedStatement pst;
+%>
+<%
+    Connection c = (Connection) application.getAttribute("connection");
+%>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADD NEW ROOM TYPE</title>
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-default top-navbar" role="navigation">
+            <a class="navbar-brand" href="home.jsp">MAIN MENU</a>
+        </nav>
+
+        <div id="page-wrapper">
+            <div id="page-inner">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="page-header">
+                            Add New Room Type
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-5 col-sm-5">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                ADD NEW ROOM TYPE
+                            </div>
+                            <div class="panel-body">
+                                <form method="post">
+                                    <div class="form-group">
+                                        <label>Label</label>
+                                        <input type="text" name="label" class="form-control" required />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Capacity</label>
+                                        <input type="number" name="capacity" class="form-control" required />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Price</label>
+                                        <input type="number" name="price" class="form-control" required />
+                                    </div>
+
+                                    <input type="submit" name="add" value="Add New Room Type" class="btn btn-primary">
+                                </form>
+
+                                <%
+                                    if(request.getParameter("add") != null) {
+                                        String label = request.getParameter("label");
+                                        String capacity = request.getParameter("capacity");
+                                        String price = request.getParameter("price");
+
+                                        // Add the new room type
+                                        String sql = "INSERT INTO RoomType (label, capacity, price) VALUES (?, ?, ?)";
+                                        pst = c.prepareStatement(sql);
+                                        pst.setString(1, label);
+                                        pst.setInt(2, Integer.parseInt(capacity));
+                                        pst.setInt(3, Integer.parseInt(price));
+
+                                        int i = pst.executeUpdate();
+                                        if (i > 0) {
+                                            out.println("<script>alert('New Room Type Added'); window.location.href='roomtypes.jsp';</script>");
+                                        } else {
+                                            out.println("<script>alert('Error! Please try again.');</script>");
+                                        }
+                                    }
+                                %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/jquery-1.10.2.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+</body>
+</html>
+
+

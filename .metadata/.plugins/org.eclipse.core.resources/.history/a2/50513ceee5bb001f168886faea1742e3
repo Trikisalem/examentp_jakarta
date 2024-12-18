@@ -1,0 +1,39 @@
+<%@ page import="java.util.List" %>
+<%@ page import="model.Hotel" %>
+
+<html>
+<head>
+    <title>Résultats de recherche</title>
+</head>
+<body>
+    <h2>Résultats de la recherche</h2>
+    
+    <c:if test="${not empty hotels}">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Ville</th>
+                    <th>Étoiles</th>
+                    <th>Adresse</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:forEach var="hotel" items="${hotels}">
+                    <tr>
+                        <td>${hotel.name}</td>
+                        <td>${hotel.city}</td>
+                        <td>${hotel.stars}</td>
+                        <td>${hotel.address}</td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
+    </c:if>
+
+    <c:if test="${not empty error}">
+        <p style="color:red">${error}</p>
+    </c:if>
+</body>
+</html>
+

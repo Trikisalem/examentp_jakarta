@@ -1,0 +1,80 @@
+package servlet;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import model.Room;
+import model.RoomType; // Assure-toi que cette classe existe et est bien définie
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.RequestDispatcher;
+
+@WebServlet("/RoomDetailsServlet")
+public class RoomDetailsServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Connexion à la base de données
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            // Charger le driver MySQL
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // Connexion à la base de données
+            String dbUrl = "jdbc:mysql://localhost:3306/hotel_management"; // Nom de la base de données
+            String dbUsername = "root"; // Nom d'utilisateur MySQL
+            String dbPassword = "triki"; // Mot de passe MySQL
+
+            conn = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+
+            // Préparer la requête pour récupérer les informations des chambres
+            String sql = "SELECT * FROM room_details";
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+
+            // Passer les résultats à la JSP
+            List<Room> rooms = new ArrayList<>();
+            while (rs.next()) {
+                Room room = new Room();
+                room.setId(rs.getInt("id"));
+                
+                // Créer un objet RoomType à partir de la valeur récupérée
+                String roomTypeValue = rs.getString("room_type");
+                RoomType roomType = new RoomType(roomTypeValue); // On suppose que RoomType a un constructeur qui prend une chaîne
+                room.setRoomType(roomType);
+                
+                room.setCapacity(rs.getInt("capacity"));
+                room.setPrice(rs.getDouble("price"));
+                rooms.add(room);
+            }
+
+            request.setAttribute("rooms", rooms);
+
+            // Redirection vers la JSP
+            RequestDispatcher dispatcher = request.getRequestDispatcher("room_details.jsp");
+            dispatcher.forward(request, response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (ps != null) ps.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}

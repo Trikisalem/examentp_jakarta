@@ -1,0 +1,184 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*" %>
+
+<%!
+    private Connection getConnection() throws SQLException {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/hotel", 
+                "root", 
+                "triki"
+            );
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("MySQL JDBC Driver not found", e);
+        }
+    }
+
+    private String mapRoomType(String frontendRoomType) {
+        switch(frontendRoomType) {
+            case "Chambre vue jardin":
+                return "Garden View";
+            case "Chambre vue de mer":
+                return "Sea View";
+            case "Bungalow":
+                return "Suite";
+            default:
+                return null;
+        }
+    }
+%>
+
+<%
+    String checkIn = request.getParameter("check_in");
+    String checkOut = request.getParameter("check_out");
+    String roomType = request.getParameter("room_type");
+    String guestFirstName = request.getParameter("guest_first_name");
+    String guestLastName = request.getParameter("guest_last_name");
+    String guestEmail = request.getParameter("guest_email");
+    String guestPhone = request.getParameter("guest_phone");
+
+    boolean validReservation = false;
+    String errorMessage = "";
+
+    if (checkIn != null && checkOut != null && roomType != null && !roomType.isEmpty() && guestFirstName != null && guestLastName != null && guestEmail != null && guestPhone != null) {
+        try {
+            java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+            java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+            String mappedRoomType = mapRoomType(roomType);
+
+            if (mappedRoomType == null) {
+                errorMessage = "Invalid room type selected.";
+            } else {
+                if (checkOutDate.after(checkInDate)) {
+                    try (Connection conn = getConnection()) {
+                        String findRoomTypeQuery = "SELECT id FROM RoomType WHERE label = ?";
+                        PreparedStatement roomTypeStmt = conn.prepareStatement(findRoomTypeQuery);
+                        roomTypeStmt.setString(1, mappedRoomType);
+
+                        ResultSet roomTypeRs = roomTypeStmt.executeQuery();
+                        if (roomTypeRs.next()) {
+                            int roomTypeId = roomTypeRs.getInt("id");
+
+                            String insertReservationQuery = "INSERT INTO Reservation " +
+                                "(guest_first_name, guest_last_name, guest_email, guest_phone, " +
+                                "check_in_date, check_out_date, room_type_id) VALUES " +
+                                "(?, ?, ?, ?, ?, ?, ?)";
+
+                            PreparedStatement pstmt = conn.prepareStatement(insertReservationQuery);
+                            pstmt.setString(1, guestFirstName);
+                            pstmt.setString(2, guestLastName);
+                            pstmt.setString(3, guestEmail);
+                            pstmt.setString(4, guestPhone);
+                            pstmt.setDate(5, checkInDate);
+                            pstmt.setDate(6, checkOutDate);
+                            pstmt.setInt(7, roomTypeId);
+
+                            int rowsAffected = pstmt.executeUpdate();
+                            validReservation = rowsAffected > 0;
+                        } else {
+                            errorMessage = "Room type not found in database.";
+                        }
+                    }
+                } else {
+                    errorMessage = "Check-out date must be after check-in date.";
+                }
+            }
+        } catch (Exception e) {
+            errorMessage = "Reservation error: " + e.getMessage();
+            e.printStackTrace();
+        }
+    } else {
+        errorMessage = "Please fill in all required fields.";
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation d'une chambre</title>
+    <style>
+        /* Your CSS styles here */
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Réservation d'une chambre</h2>
+        
+        <% if (!errorMessage.isEmpty()) { %>
+            <div class="error-message"><%= errorMessage %></div>
+        <% } %>
+        
+        <% if (validReservation) { %>
+            <div class="confirmation-message">Réservation effectuée avec succès !</div>
+        <% } %>
+
+        <form action="reservation.jsp" method="post" id="reservation-form">
+            <div class="input-container">
+                <label for="room_type">Type de chambre :</label>
+                <select id="room_type" name="room_type" required onchange="updatePrice()">
+                    <option value="">Sélectionnez un type de chambre</option>
+                    <option value="Chambre vue jardin">Chambre vue jardin</option>
+                    <option value="Chambre vue de mer">Chambre vue de mer</option>
+                    <option value="Bungalow">Bungalow</option>
+                </select>
+            </div>
+
+            <div class="input-container">
+                <label for="check_in">Date d'arrivée :</label>
+                <input type="date" id="check_in" name="check_in" required onchange="updatePrice()">
+            </div>
+
+            <div class="input-container">
+                <label for="check_out">Date de départ :</label>
+                <input type="date" id="check_out" name="check_out" required onchange="updatePrice()">
+            </div>
+
+            <div class="input-container">
+                <label for="guest_first_name">Prénom :</label>
+                <input type="text" id="guest_first_name" name="guest_first_name" required>
+            </div>
+
+            <div class="input-container">
+                <label for="guest_last_name">Nom :</label>
+                <input type="text" id="guest_last_name" name="guest_last_name" required>
+            </div>
+
+            <div class="input-container">
+                <label for="guest_email">Email :</label>
+                <input type="email" id="guest_email" name="guest_email" required>
+            </div>
+
+            <div class="input-container">
+                <label for="guest_phone">Téléphone :</label>
+                <input type="text" id="guest_phone" name="guest_phone" required>
+            </div>
+
+            <input type="hidden" id="price" name="price" value="100">
+            <input type="hidden" id="total_price" name="total_price" value="0">
+
+            <div id="reservation-details" class="reservation-details" style="display: none;">
+                <h3>Détails de la réservation</h3>
+                <p><strong>Type de chambre :</strong> <span id="room_display"></span></p>
+                <p><strong>Date d'arrivée :</strong> <span id="check_in_display"></span></p>
+                <p><strong>Date de départ :</strong> <span id="check_out_display"></span></p>
+                <p><strong>Prix total :</strong> <span id="total_price_display"></span></p>
+            </div>
+
+            <button type="submit">Soumettre la réservation</button>
+        </form>
+
+        <div class="qr-code">
+            <h3>Reconnaissance par QR Code</h3>
+            <p>Scannez ce QR Code pour plus d'informations :</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?data=http://example.com&size=150x150" alt="QR Code">
+        </div>
+    </div>
+
+    <script>
+        // Your updatePrice() and form validation scripts here
+    </script>
+</body>
+</html>

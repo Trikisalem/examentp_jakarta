@@ -1,0 +1,68 @@
+package servlet;
+
+
+import model.Hotel;
+import connecteur.MySQLConnectionTest; // Importez la connexion à la base de données
+import java.io.IOException;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/addHotel")
+public class AddHotelServlet extends HttpServlet {
+
+    // Processus de soumission du formulaire
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupérer les paramètres du formulaire
+        String name = request.getParameter("name");
+        String city = request.getParameter("city");
+        String starsStr = request.getParameter("stars");
+        String description = request.getParameter("description");
+        String image = request.getParameter("image"); // URL de l'image
+
+        // Validation des entrées
+        if (name == null || name.isEmpty() || city == null || city.isEmpty() || starsStr == null || starsStr.isEmpty() || description == null || description.isEmpty() || image == null || image.isEmpty()) {
+            response.sendRedirect("error.jsp?message=All fields are required");
+            return;
+        }
+
+        int stars = 0;
+        try {
+            stars = Integer.parseInt(starsStr); // Convertir les étoiles en entier
+        } catch (NumberFormatException e) {
+            response.sendRedirect("error.jsp?message=Stars must be a number");
+            return;
+        }
+
+        // Créer un objet Hôtel à partir des données du formulaire
+        Hotel hotel = new Hotel();
+        hotel.setName(name);
+        hotel.setCity(city);
+        hotel.setStars(stars);
+        hotel.setDescription(description);
+        hotel.setImage(image);
+
+        // Créer une instance de la connexion à la base de données
+        MySQLConnectionTest connection = new MySQLConnectionTest(); // Créez la connexion ici
+        HotelDAO hotelDAO = new HotelDAO(connection); // Passez la connexion à HotelDAO
+
+        try {
+            // Ajouter l'hôtel dans la base de données
+            hotelDAO.addHotel(hotel);
+            // Rediriger vers une page de succès (par exemple, la liste des hôtels)
+            response.sendRedirect("hotelList.jsp");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Gérer l'erreur en affichant un message d'erreur (par exemple)
+            response.sendRedirect("error.jsp?message=Error adding hotel: " + e.getMessage());
+        } 
+    }
+
+    // Traitement de la requête GET (si nécessaire, vous pouvez rediriger vers un formulaire)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Rediriger vers un formulaire HTML pour ajouter un hôtel
+        request.getRequestDispatcher("addHotelForm.jsp").forward(request, response);
+    }
+}

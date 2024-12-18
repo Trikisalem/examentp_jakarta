@@ -1,0 +1,291 @@
+<%@ page import="java.sql.*" %>
+<%@ page contentType="text/html; charset=UTF-8"%>
+<%@ page language="java" %>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Booking</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div id="page-wrapper">
+        <div id="page-inner">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="page-header">
+                        Room Booking <small><%= curdate %></small>
+                    </h1>
+                </div>
+
+                <div class="col-md-8 col-sm-8">
+                    <div class="panel panel-info">
+                        <div class="panel-heading">
+                            Booking Confirmation
+                        </div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <tr>
+                                        <th>DESCRIPTION</th>
+                                        <th>INFORMATION</th>
+                                    </tr>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th><%= title %> <%= fname %> <%= lname %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th><%= email %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Nationality</th>
+                                        <th><%= nat %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Country</th>
+                                        <th><%= country %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Phone No</th>
+                                        <th><%= phone %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Room Type</th>
+                                        <th><%= troom %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Room Number</th>
+                                        <th><%= nroom %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Meal Plan</th>
+                                        <th><%= meal %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Bedding</th>
+                                        <th><%= bed %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Check-in Date</th>
+                                        <th><%= cin %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Check-out Date</th>
+                                        <th><%= cout %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>No of days</th>
+                                        <th><%= days %></th>
+                                    </tr>
+                                    <tr>
+                                        <th>Status Level</th>
+                                        <th><%= sta %></th>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="panel-footer">
+                            <form method="post">
+                                <div class="form-group">
+                                    <label>Select the Confirmation</label>
+                                    <select name="conf" class="form-control">
+                                        <option value selected> </option>
+                                        <option value="Confirm">Confirm</option>
+                                    </select>
+                                </div>
+                                <input type="submit" name="co" value="Confirm" class="btn btn-success">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <%
+                // Calcul des chambres disponibles
+                String rsql = "SELECT * FROM room";
+                ps = c.prepareStatement(rsql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                rs = ps.executeQuery();
+
+                int r = 0, sc = 0, gh = 0, sr = 0, dr = 0;
+                while (rs.next()) {
+                    r++;
+                    String s = rs.getString("type");
+                    if (s.equals("Superior Room")) {
+                        sc++;
+                    } else if (s.equals("Guest House")) {
+                        gh++;
+                    } else if (s.equals("Single Room")) {
+                        sr++;
+                    } else if (s.equals("Deluxe Room")) {
+                        dr++;
+                    }
+                }
+                %>
+
+                <%
+                // Calcul des chambres réservées
+                String csql = "SELECT * FROM payment";
+                ps = c.prepareStatement(csql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                rs = ps.executeQuery();
+                int cr = 0, csc = 0, cgh = 0, csr = 0, cdr = 0;
+                while (rs.next()) {
+                    cr++;
+                    String cs = rs.getString("troom");
+                    if (cs.equals("Superior Room")) {
+                        csc++;
+                    } else if (cs.equals("Guest House")) {
+                        cgh++;
+                    } else if (cs.equals("Single Room")) {
+                        csr++;
+                    } else if (cs.equals("Deluxe Room")) {
+                        cdr++;
+                    }
+                }
+                %>
+
+                <div class="col-md-4 col-sm-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            Available Room Details
+                        </div>
+                        <div class="panel-body">
+                            <table width="200px">
+                                <tr>
+                                    <td><b>Superior Room</b></td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-circle">
+                                            <%= sc - csc <= 0 ? "NO" : sc - csc %>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Guest House</b></td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-circle">
+                                            <%= gh - cgh <= 0 ? "NO" : gh - cgh %>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Single Room</b></td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-circle">
+                                            <%= sr - csr <= 0 ? "NO" : sr - csr %>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Deluxe Room</b></td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-circle">
+                                            <%= dr - cdr <= 0 ? "NO" : dr - cdr %>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Total Rooms</b></td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-circle">
+                                            <%= r - cr <= 0 ? "NO" : r - cr %>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <% 
+            // Logique de confirmation de la réservation
+            if (request.getParameter("co") != null) {
+                String st = request.getParameter("conf");
+                if ("Confirm".equals(st)) {
+                    String urb = "UPDATE roombook SET stat='" + st + "' WHERE id = " + id;
+                    if (f1 <= 0) {
+                        out.print("<script type='text/javascript'> alert('Sorry! Not Available Superior Room')</script>");
+                    } else if (f2 <= 0) {
+                        out.print("<script type='text/javascript'> alert('Sorry! Not Available Guest House')</script>");
+                    } else if (f3 <= 0) {
+                        out.print("<script type='text/javascript'> alert('Sorry! Not Available Single Room')</script>");
+                    } else if (f4 <= 0) {
+                        out.print("<script type='text/javascript'> alert('Sorry! Not Available Deluxe Room')</script>");
+                    } else {
+                        ps = c.prepareStatement(urb);
+                        int i = ps.executeUpdate();
+
+                        // Calcul du montant total
+                        double type_of_room = 0;
+                        if ("Superior Room".equals(troom)) {
+                            type_of_room = 320;
+                        } else if ("Deluxe Room".equalsIgnoreCase("Deluxe Room")) {
+                            type_of_room = 220;
+                        } else if ("Guest House".equalsIgnoreCase("Guest House")) {
+                            type_of_room = 180;
+                        } else if ("Single Room".equalsIgnoreCase("Single Room")) {
+                            type_of_room = 150;
+                        }
+
+                        // Calcul du prix des lits et des repas
+                        double type_of_bed = (bed.equalsIgnoreCase("Single")) ? type_of_room * 4 / 100 :
+                                            (bed.equalsIgnoreCase("Double")) ? type_of_room * 5 / 100 :
+                                            (bed.equalsIgnoreCase("Triple")) ? type_of_room * 6 / 100 :
+                                            (bed.equalsIgnoreCase("Quad")) ? type_of_room * 7 / 100 : 0;
+
+                        double type_of_meal = (meal.equalsIgnoreCase("Room only")) ? 0 : 
+                                             (meal.equalsIgnoreCase("Breakfast")) ? type_of_bed * 4 :
+                                             (meal.equalsIgnoreCase("Half Board")) ? type_of_bed * 5 :
+                                             (meal.equalsIgnoreCase("Full Board")) ? type_of_bed * 6 : 0;
+
+                        double ttot = type_of_room * days * nroom;
+                        double mepr = type_of_meal * days;
+                        double btot = type_of_bed * days;
+                        double fintot = ttot + mepr + btot;
+
+                        // Insertion des détails de paiement
+                        String psql = "INSERT INTO payment(id, title, fname, lname, troom, tbed, nroom, cin, cout, ttot, meal, mepr, btot, fintot, noofdays) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        ps = c.prepareStatement(psql);
+                        ps.setInt(1, id);
+                        ps.setString(2, title);
+                        ps.setString(3, fname);
+                        ps.setString(4, lname);
+                        ps.setString(5, troom);
+                        ps.setString(6, bed);
+                        ps.setInt(7, nroom);
+                        ps.setString(8, cin);
+                        ps.setString(9, cout);
+                        ps.setDouble(10, ttot);
+                        ps.setString(11, meal);
+                        ps.setDouble(12, mepr);
+                        ps.setDouble(13, btot);
+                        ps.setDouble(14, fintot);
+                        ps.setInt(15, days);
+
+                        int i1 = ps.executeUpdate();
+                        if (i1 > 0) {
+                            String notfree = "NotFree";
+                            String rpsql = "UPDATE room SET place='" + notfree + "', cusid=" + id + " WHERE bedding='" + bed + "' AND type='" + troom + "'";
+                            ps = c.prepareStatement(rpsql);
+                            int i2 = ps.executeUpdate();
+                            if (i2 > 0) {
+                                response.sendRedirect("home.jsp");
+                                out.print("<script type='text/javascript'> alert('Booking Confirmed');</script>");
+                                out.print("<script type='text/javascript'> window.location='home.jsp';</script>");
+                            }
+                        }
+                    }
+                }
+            }
+            %>
+        </div>
+    </div>
+    <script src="assets/js/jquery-1.10.2.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+</body>
+
+</html>
+

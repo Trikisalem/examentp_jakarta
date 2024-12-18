@@ -1,0 +1,140 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page import="java.util.*, java.sql.*" %>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord des agents</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Ajoutez votre CSS si nécessaire -->
+</head>
+<body>
+
+    <h1>Tableau de bord - Gestion des agents</h1>
+
+    <!-- Formulaire pour créer ou modifier un agent -->
+    <h2>Créer / Modifier un agent</h2>
+    <form method="post" action="agent.jsp">
+        <input type="hidden" name="agentId" value="${agent.id}">
+        <label for="username">Nom d'utilisateur :</label>
+        <input type="text" name="username" id="username" value="${agent.username}" required><br><br>
+
+        <label for="password">Mot de passe :</label>
+        <input type="password" name="password" id="password" value="${agent.password}" required><br><br>
+
+        <button type="submit" name="action" value="save">Sauvegarder</button>
+    </form>
+
+    <!-- Table des agents existants -->
+    <h2>Liste des agents</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom d'utilisateur</th>
+                <th>Mot de passe</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <c:forEach var="agent" items="${agents}">
+                <tr>
+                    <td>${agent.id}</td>
+                    <td>${agent.username}</td>
+                    <td>${agent.password}</td>
+                    <td>
+                        <a href="agent.jsp?action=edit&id=${agent.id}">Modifier</a>
+                        <a href="agent.jsp?action=delete&id=${agent.id}" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet agent ?')">Supprimer</a>
+                    </td>
+                </tr>
+            </c:forEach>
+        </tbody>
+    </table>
+
+    <%
+        // Connexion à la base de données
+        String url = "jdbc:mysql://localhost:3306/your_database";
+        String user = "root";
+        String pass = "your_password";
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+        
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, pass);
+            stmt = conn.createStatement();
+
+            // Gérer l'ajout, la mise à jour ou la suppression d'agents
+            String action = request.getParameter("action");
+
+            if ("save".equals(action)) {
+                String username = request.getParameter("username");
+                String password = request.getParameter("password");
+                String agentId = request.getParameter("agentId");
+
+                if (agentId != null && !agentId.isEmpty()) {
+                    // Mise à jour de l'agent
+                    String updateSQL = "UPDATE agents SET username = ?, password = ? WHERE id = ?";
+                    PreparedStatement ps = conn.prepareStatement(updateSQL);
+                    ps.setString(1, username);
+                    ps.setString(2, password);
+                    ps.setInt(3, Integer.parseInt(agentId));
+                    ps.executeUpdate();
+                } else {
+                    // Création d'un nouvel agent
+                    String insertSQL = "INSERT INTO agents (username, password) VALUES (?, ?)";
+                    PreparedStatement ps = conn.prepareStatement(insertSQL);
+                    ps.setString(1, username);
+                    ps.setString(2, password);
+                    ps.executeUpdate();
+                }
+                response.sendRedirect("agent.jsp");
+            } else if ("delete".equals(action)) {
+                String agentId = request.getParameter("id");
+                String deleteSQL = "DELETE FROM agents WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(deleteSQL);
+                ps.setInt(1, Integer.parseInt(agentId));
+                ps.executeUpdate();
+                response.sendRedirect("agent.jsp");
+            } else if ("edit".equals(action)) {
+                String agentId = request.getParameter("id");
+                String selectSQL = "SELECT * FROM agents WHERE id = ?";
+                PreparedStatement ps = conn.prepareStatement(selectSQL);
+                ps.setInt(1, Integer.parseInt(agentId));
+                rs = ps.executeQuery();
+                if (rs.next()) {
+                    request.setAttribute("agent", rs);
+                }
+            }
+
+            // Affichage des agents dans la table
+            String selectAllSQL = "SELECT * FROM agents";
+            rs = stmt.executeQuery(selectAllSQL);
+            List<Map<String, String>> agentsList = new ArrayList<>();
+            while (rs.next()) {
+                Map<String, String> agent = new HashMap<>();
+                agent.put("id", rs.getString("id"));
+                agent.put("username", rs.getString("username"));
+                agent.put("password", rs.getString("password"));
+                agentsList.add(agent);
+            }
+            request.setAttribute("agents", agentsList);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    %>
+
+</body>
+</html>
+ml>

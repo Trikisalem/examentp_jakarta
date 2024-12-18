@@ -1,0 +1,379 @@
+<%@page import="java.util.ArrayList"%>
+<%@page import="java.util.List"%>
+<%@page import="java.util.Iterator"%>
+<%
+   
+    // Classe interne pour simuler un paiement
+    class Payment {
+        private int id;
+        private String title;
+        private String fname;
+        private String lname;
+        private String roomType;
+        private String bedType;
+        private String checkIn;
+        private String checkOut;
+        private int noOfRooms;
+        private String mealType;
+        private double roomRent;
+        private double bedRent;
+        private double mealCost;
+        private double total;
+
+        public Payment(int id, String title, String fname, String lname, String roomType, String bedType, 
+                        String checkIn, String checkOut, int noOfRooms, String mealType, 
+                        double roomRent, double bedRent, double mealCost, double total) {
+            this.id = id;
+            this.title = title;
+            this.fname = fname;
+            this.lname = lname;
+            this.roomType = roomType;
+            this.bedType = bedType;
+            this.checkIn = checkIn;
+            this.checkOut = checkOut;
+            this.noOfRooms = noOfRooms;
+            this.mealType = mealType;
+            this.roomRent = roomRent;
+            this.bedRent = bedRent;
+            this.mealCost = mealCost;
+            this.total = total;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getFname() {
+            return fname;
+        }
+
+        public String getLname() {
+            return lname;
+        }
+
+        public String getRoomType() {
+            return roomType;
+        }
+
+        public String getBedType() {
+            return bedType;
+        }
+
+        public String getCheckIn() {
+            return checkIn;
+        }
+
+        public String getCheckOut() {
+            return checkOut;
+        }
+
+        public int getNoOfRooms() {
+            return noOfRooms;
+        }
+
+        public String getMealType() {
+            return mealType;
+        }
+
+        public double getRoomRent() {
+            return roomRent;
+        }
+
+        public double getBedRent() {
+            return bedRent;
+        }
+
+        public double getMealCost() {
+            return mealCost;
+        }
+
+        public double getTotal() {
+            return total;
+        }
+    }
+%>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SUNRISE HOTEL</title>
+
+    <!-- CSS intégré -->
+    <style>
+        /* Style global */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Conteneur principal */
+        #wrapper {
+            display: flex;
+            flex-direction: row;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #2196F3;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        /* Sidebar */
+        .navbar-side {
+            background-color: #333;
+            color: white;
+            width: 250px;
+            padding-top: 20px;
+            box-shadow: 4px 0 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-side ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .navbar-side ul li a {
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            display: block;
+            font-size: 16px;
+        }
+
+        .navbar-side ul li a:hover {
+            background-color: #575757;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Main Content Area */
+        #page-wrapper {
+            flex-grow: 1;
+            padding: 30px;
+            background-color: #fff;
+        }
+
+        /* Table */
+        .table-responsive {
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            margin: 0 auto;
+            border-collapse: collapse;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .table th, .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table th {
+            background-color: #2196F3;
+            color: white;
+            font-size: 16px;
+        }
+
+        .table-striped tbody tr:nth-child(odd) {
+            background-color: #f9f9f9;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        /* Button */
+        .btn {
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0b7dda;
+        }
+
+        /* Search Box */
+        .search-box {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+
+        /* Page Header */
+        .page-header {
+            font-size: 36px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+       
+        <nav class="navbar-default navbar-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu">
+                    <li><a href="home.jsp"><i class="fa fa-dashboard"></i> Status</a></li>
+                    <li><a href="messages.jsp"><i class="fa fa-desktop"></i> News Letters</a></li>
+                    <li><a href="roombook.jsp"><i class="fa fa-bar-chart-o"></i> Room Booking</a></li>
+                    <li><a href="payment.jsp" class="active-menu"><i class="fa fa-qrcode"></i> Payment</a></li>
+                    <li><a href="profit.jsp"><i class="fa fa-qrcode"></i> Profit</a></li>
+                    <li><a href="logout.jsp"><i class="fa fa-sign-out fa-fw"></i> Logout</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="page-wrapper">
+            <div id="page-inner">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="page-header">Payment Details</h1>
+                    </div>
+                </div>
+
+                <!-- Search Box -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" class="search-box" placeholder="Search Payments..." onkeyup="searchPayments()">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-bordered table-hover" id="dataTables-example">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Room Type</th>
+                                                <th>Bed Type</th>
+                                                <th>Check-in</th>
+                                                <th>Check-out</th>
+                                                <th>No of Rooms</th>
+                                                <th>Meal Type</th>
+                                                <th>Room Rent</th>
+                                                <th>Bed Rent</th>
+                                                <th>Meals</th>
+                                                <th>Grand Total</th>
+                                                <th>Print</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% 
+                                                List<Payment> payments = new ArrayList<>();
+                                                payments.add(new Payment(1, "Mr.", "John", "Doe", "Single Room", "King", "2024-12-01", "2024-12-05", 2, "Full Board", 200, 50, 30, 280));
+                                                payments.add(new Payment(2, "Ms.", "Jane", "Smith", "Deluxe Room", "Queen", "2024-12-02", "2024-12-06", 1, "Half Board", 150, 40, 20, 210));
+                                                
+                                                for (Payment payment : payments) {
+                                            %>
+                                            <tr>
+                                                <td><%= payment.getTitle() + " " + payment.getFname() + " " + payment.getLname() %></td>
+                                                <td><%= payment.getRoomType() %></td>
+                                                <td><%= payment.getBedType() %></td>
+                                                <td><%= payment.getCheckIn() %></td>
+                                                <td><%= payment.getCheckOut() %></td>
+                                                <td><%= payment.getNoOfRooms() %></td>
+                                                <td><%= payment.getMealType() %></td>
+                                                <td><%= payment.getRoomRent() %></td>
+                                                <td><%= payment.getBedRent() %></td>
+                                                <td><%= payment.getMealCost() %></td>
+                                                <td><%= payment.getTotal() %></td>
+                                                <td><button class="btn" onclick="printDocument(<%= payment.getId() %>)">Print</button></td>
+                                            </tr>
+                                            <% 
+                                                } 
+                                            %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/jquery-1.10.2.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/jquery.metisMenu.js"></script>
+    <script src="assets/js/dataTables/jquery.dataTables.js"></script>
+    <script src="assets/js/dataTables/dataTables.bootstrap.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#dataTables-example').dataTable();
+        });
+
+        function printDocument(pid) {
+            window.location.href = 'print.jsp?pid=' + pid;
+        }
+
+        function searchPayments() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.querySelector(".search-box");
+            filter = input.value.toUpperCase();
+            table = document.querySelector(".table");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td");
+                for (var j = 0; j < td.length; j++) {
+                    if (td[j]) {
+                        txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            tr[i].style.display = "";
+                            break;
+                        } else {
+                            tr[i].style.display = "none";
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
+

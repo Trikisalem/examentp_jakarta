@@ -1,0 +1,131 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*" %>
+
+<%
+    // Initialisation des variables pour la récupération des données
+    String checkIn = request.getParameter("check_in");
+    String checkOut = request.getParameter("check_out");
+    String roomType = request.getParameter("room_type");
+
+    double price = 0.0;
+    String priceParam = request.getParameter("price");
+    if (priceParam != null && !priceParam.isEmpty()) {
+        try {
+            price = Double.parseDouble(priceParam);
+        } catch (NumberFormatException e) {
+            out.println("Le prix est invalide.");
+        }
+    }
+
+    // Vérification des paramètres pour la réservation
+    if (price > 0 && checkIn != null && checkOut != null && roomType != null) {
+        // Logique d'insertion dans la base de données
+        String insertSQL = "INSERT INTO Reservation (check_in_date, check_out_date, room_type, price) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hotel_management", "root", "password");
+             PreparedStatement stmt = conn.prepareStatement(insertSQL)) {
+
+            stmt.setString(1, checkIn);
+            stmt.setString(2, checkOut);
+            stmt.setString(3, roomType);
+            stmt.setDouble(4, price);
+
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                out.println("Réservation effectuée avec succès !");
+            } else {
+                out.println("Échec de la réservation.");
+            }
+        } catch (SQLException e) {
+            out.println("Erreur lors de l'enregistrement de la réservation : " + e.getMessage());
+        }
+    } else {
+        out.println("Veuillez remplir tous les champs correctement.");
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation d'une chambre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .form-container {
+            width: 50%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-container h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .qr-code img {
+            width: 150px;
+            height: 150px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Réservation d'une chambre</h2>
+    <form action="reservation.jsp" method="post">
+        <label for="price">Prix :</label>
+        <input type="number" id="price" name="price" min="1" required placeholder="Entrez le prix">
+
+        <label for="check_in">Date d'arrivée :</label>
+        <input type="date" id="check_in" name="check_in" required>
+
+        <label for="check_out">Date de départ :</label>
+        <input type="date" id="check_out" name="check_out" required>
+
+        <label for="room_type">Type de chambre :</label>
+        <input type="text" id="room_type" name="room_type" required placeholder="Entrez le type de chambre">
+
+        <button type="submit">Soumettre</button>
+    </form>
+
+    <!-- Ajout du QR Code -->
+    <div class="qr-code">
+        <h3>Reconnaissance par QR Code</h3>
+        <p>Scannez ce QR Code pour plus d'informations :</p>
+        <!-- Exemple de QR code généré avec un outil externe ou une bibliothèque -->
+        <img src="https://api.qrserver.com/v1/create-qr-code/?data=http://example.com&size=150x150" alt="QR Code">
+    </div>
+</div>
+
+</body>
+</html>

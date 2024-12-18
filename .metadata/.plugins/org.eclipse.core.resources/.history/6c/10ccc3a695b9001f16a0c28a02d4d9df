@@ -1,0 +1,143 @@
+%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*" %>
+
+<%!
+    // Database connection method
+    private Connection getConnection() throws SQLException {
+        try {
+            // Load JDBC driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/hotel_management", 
+                "your_username", 
+                "your_password"
+            );
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("MySQL JDBC Driver not found", e);
+        }
+    }
+
+    // Method to map front-end room types to database labels
+    private String mapRoomType(String frontendRoomType) {
+        switch(frontendRoomType) {
+            case "Chambre vue jardin":
+                return "Garden View";
+            case "Chambre vue de mer":
+                return "Sea View";
+            case "Bungalow":
+                return "Suite";
+            default:
+                return null;
+        }
+    }
+%>
+
+<%
+    // Get form parameters
+    String checkIn = request.getParameter("check_in");
+    String checkOut = request.getParameter("check_out");
+    String roomType = request.getParameter("room_type");
+    
+    // Validation variables
+    boolean validReservation = false;
+    String errorMessage = "";
+
+    // Debug print
+    System.out.println("Received Room Type: " + roomType);
+
+    if (checkIn != null && checkOut != null && roomType != null && !roomType.isEmpty()) {
+        try {
+            // Convert dates
+            java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+            java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+
+            // Map room type to database label
+            String mappedRoomType = mapRoomType(roomType);
+            
+            // Debug print
+            System.out.println("Mapped Room Type: " + mappedRoomType);
+
+            if (mappedRoomType == null) {
+                errorMessage = "Invalid room type selected.";
+            } else {
+                // Validate dates
+                if (checkOutDate.after(checkInDate)) {
+                    try (Connection conn = getConnection()) {
+                        // Find room type ID
+                        String findRoomTypeQuery = "SELECT id FROM RoomType WHERE label = ?";
+                        PreparedStatement roomTypeStmt = conn.prepareStatement(findRoomTypeQuery);
+                        roomTypeStmt.setString(1, mappedRoomType);
+                        
+                        // Debug print
+                        System.out.println("Query: " + roomTypeStmt.toString());
+
+                        ResultSet roomTypeRs = roomTypeStmt.executeQuery();
+
+                        if (roomTypeRs.next()) {
+                            int roomTypeId = roomTypeRs.getInt("id");
+
+                            // Prepare reservation insert (you'd typically get these from a login or form)
+                            String insertReservationQuery = "INSERT INTO Reservation " +
+                                "(guest_first_name, guest_last_name, guest_email, guest_phone, " +
+                                "check_in_date, check_out_date, room_type_id) VALUES " +
+                                "(?, ?, ?, ?, ?, ?, ?)";
+
+                            PreparedStatement pstmt = conn.prepareStatement(insertReservationQuery);
+                            pstmt.setString(1, "Guest"); // Placeholder
+                            pstmt.setString(2, "LastName"); // Placeholder
+                            pstmt.setString(3, "guest@example.com"); // Placeholder
+                            pstmt.setString(4, "1234567890"); // Placeholder
+                            pstmt.setDate(5, checkInDate);
+                            pstmt.setDate(6, checkOutDate);
+                            pstmt.setInt(7, roomTypeId);
+
+                            int rowsAffected = pstmt.executeUpdate();
+                            validReservation = rowsAffected > 0;
+                        } else {
+                            errorMessage = "Room type not found in database.";
+                        }
+                    }
+                } else {
+                    errorMessage = "Check-out date must be after check-in date.";
+                }
+            }
+        } catch (Exception e) {
+            errorMessage = "Reservation error: " + e.getMessage();
+            // Log the full stack trace
+            e.printStackTrace();
+        }
+    } else {
+        errorMessage = "Please fill in all required fields.";
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <!-- Previous head content remains the same -->
+</head>
+<body>
+    <div class="form-container">
+        <h2>Réservation d'une chambre</h2>
+        
+        <% if (!errorMessage.isEmpty()) { %>
+            <div class="error-message"><%= errorMessage %></div>
+        <% } %>
+        
+        <% if (validReservation) { %>
+            <div class="confirmation-message">Réservation effectuée avec succès !</div>
+        <% } %>
+
+        <form action="reservation.jsp" method="post" id="reservation-form">
+            <!-- Previous form content remains the same -->
+            <label for="room_type">Type de chambre :</label>
+            <select id="room_type" name="room_type" required onchange="updatePrice()">
+                <option value="">Sélectionnez un type de chambre</option>
+                <option value="Chambre vue jardin">Chambre vue jardin</option>
+                <option value="Chambre vue de mer">Chambre vue de mer</option>
+                <option value="Bungalow">Bungalow</option>
+            </select>
+        </form>
+    </div>
+</body>
+</html>

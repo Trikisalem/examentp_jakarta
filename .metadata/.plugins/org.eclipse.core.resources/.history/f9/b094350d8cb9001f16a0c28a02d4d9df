@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation d'une chambre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .form-container {
+            width: 50%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-container h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Réservation d'une chambre</h2>
+    <form action="reservation.jsp" method="post">
+        <!-- Champ de sélection du type de chambre -->
+        <label for="room_type">Type de chambre :</label>
+        <select id="room_type" name="room_type" required onchange="updatePrice()">
+            <option value="Chambre vue jardin">Chambre vue jardin</option>
+            <option value="Chambre vue de mer">Chambre vue de mer</option>
+            <option value="Bungalow">Bungalow</option>
+        </select>
+
+        <!-- Champs de date -->
+        <label for="check_in">Date d'arrivée :</label>
+        <input type="date" id="check_in" name="check_in" required>
+
+        <label for="check_out">Date de départ :</label>
+        <input type="date" id="check_out" name="check_out" required>
+
+        <!-- Champ caché pour le prix -->
+        <input type="hidden" id="price" name="price" value="100">
+        <input type="hidden" id="total_price" name="total_price" value="0">
+
+        <button type="submit">Soumettre</button>
+    </form>
+
+    <!-- Section des détails de réservation -->
+    <div id="reservation_details" style="display: none;">
+        <h3>Details de la réservation</h3>
+        <p><strong>Type de chambre :</strong> <span id="room_display"></span></p>
+        <p><strong>Date d'arrivée :</strong> <span id="check_in_display"></span></p>
+        <p><strong>Date de départ :</strong> <span id="check_out_display"></span></p>
+        <p><strong>Prix total :</strong> <span id="total_price_display"></span></p>
+    </div>
+</div>
+
+<script>
+    // Fonction pour mettre à jour le prix en fonction du type de chambre et calculer le prix total
+    function updatePrice() {
+        var roomType = document.getElementById("room_type").value;
+        var priceField = document.getElementById("price");
+        var totalPriceField = document.getElementById("total_price");
+
+        // Définir le prix par jour en fonction du type de chambre
+        var dailyPrice;
+        if (roomType === "Chambre vue jardin") {
+            dailyPrice = 100;
+        } else if (roomType === "Chambre vue de mer") {
+            dailyPrice = 180;
+        } else if (roomType === "Bungalow") {
+            dailyPrice = 250;
+        }
+
+        priceField.value = dailyPrice;
+
+        // Calcul du prix total en fonction des dates sélectionnées
+        var checkInDate = document.getElementById("check_in").value;
+        var checkOutDate = document.getElementById("check_out").value;
+
+        if (checkInDate && checkOutDate) {
+            var checkIn = new Date(checkInDate);
+            var checkOut = new Date(checkOutDate);
+            var daysDiff = (checkOut - checkIn) / (1000 * 60 * 60 * 24); // Différence en jours
+            if (daysDiff > 0) {
+                var totalPrice = dailyPrice * daysDiff;
+                totalPriceField.value = totalPrice;
+
+                // Afficher les détails de la réservation
+                document.getElementById("room_display").innerText = roomType;
+                document.getElementById("check_in_display").innerText = checkInDate;
+                document.getElementById("check_out_display").innerText = checkOutDate;
+                document.getElementById("total_price_display").innerText = totalPrice + " DT";
+
+                // Afficher la section des détails de la réservation
+                document.getElementById("reservation_details").style.display = "block";
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
+

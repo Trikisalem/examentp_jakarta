@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation de chambre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+        .form-container h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-container input, .form-container select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-container button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .form-container button:hover {
+            background-color: #45a049;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .confirmation-message {
+            color: green;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Réservation d'une chambre</h2>
+        <form method="post" action="processReservation.jsp">
+            <label for="check_in">Date d'arrivée :</label>
+            <input type="date" id="check_in" name="check_in" required>
+
+            <label for="check_out">Date de départ :</label>
+            <input type="date" id="check_out" name="check_out" required>
+
+            <label for="room_type">Type de chambre :</label>
+            <select id="room_type" name="room_type" required>
+                <option value="single">Simple</option>
+                <option value="double">Double</option>
+                <option value="suite">Suite</option>
+            </select>
+
+            <button type="submit">Réserver</button>
+        </form>
+    </div>
+</body>
+</html>
+
+<!-- Fichier processReservation.jsp -->
+<%@ page import="java.sql.*" %>
+<%
+    boolean validReservation = false;
+    String successMessage = "";
+    String errorMessage = "";
+
+    String checkIn = request.getParameter("check_in");
+    String checkOut = request.getParameter("check_out");
+    String roomType = request.getParameter("room_type");
+
+    if (checkIn != null && checkOut != null && roomType != null) {
+        try {
+            java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+            java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+
+            if (checkOutDate.after(checkInDate)) {
+                try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hotel", "root", "triki")) {
+                    String findRoomTypeQuery = "SELECT id FROM RoomType WHERE label = ?";
+                    PreparedStatement roomTypeStmt = conn.prepareStatement(findRoomTypeQuery);
+                    roomTypeStmt.setString(1, roomType);
+                    ResultSet roomTypeRs = roomTypeStmt.executeQuery();
+
+                    if (roomTypeRs.next()) {
+                        int roomTypeId = roomTypeRs.getInt("id");
+
+                        String insertReservationQuery = "INSERT INTO Reservation (guest_first_name, guest_last_name, guest_email, guest_phone, check_in_date, check_out_date, room_type_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                        PreparedStatement pstmt = conn.prepareStatement(insertReservationQuery);
+                        pstmt.setString(1, "Guest");
+                        pstmt.setString(2, "LastName");
+                        pstmt.setString(3, "guest@example.com");
+                        pstmt.setString(4, "1234567890");
+                        pstmt.setDate(5, checkInDate);
+                        pstmt.setDate(6, checkOutDate);
+                        pstmt.setInt(7, roomTypeId);
+
+                        int rowsAffected = pstmt.executeUpdate();
+                        if (rowsAffected > 0) {
+                            validReservation = true;
+                            successMessage = "Réservation effectuée avec succès !";
+                        } else {
+                            errorMessage = "Échec de l'enregistrement de la réservation.";
+                        }
+                    } else {
+                        errorMessage = "Type de chambre introuvable.";
+                    }
+                }
+            } else {
+                errorMessage = "La date de départ doit être après la date d'arrivée.";
+            }
+        } catch (Exception e) {
+            errorMessage = "Erreur : " + e.getMessage();
+            e.printStackTrace();
+        }
+    } else {
+        errorMessage = "Veuillez remplir tous les champs requis.";
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+        }
+        .message {
+            margin: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            margin: auto;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .confirmation-message {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="message <%= validReservation ? "confirmation-message" : "error-message" %>">
+        <%= validReservation ? successMessage : errorMessage %>
+    </div>
+    <a href="reservation.jsp">Retour au formulaire</a>
+</body>
+</html>
+

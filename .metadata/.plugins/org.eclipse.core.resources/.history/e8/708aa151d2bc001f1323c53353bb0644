@@ -1,0 +1,177 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Management</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #e1f5fe; /* Bleu ciel pour le fond */
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            display: flex;
+            justify-content: center; /* Centrer horizontalement */
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+        }
+
+        .form-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .form-container h3 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-container input,
+        .form-container textarea,
+        .form-container button {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        .form-container input[type="file"] {
+            padding: 5px 12px;
+        }
+
+        .form-container input:focus,
+        .form-container textarea:focus,
+        .form-container button:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 8px rgba(33, 150, 243, 0.4);
+        }
+
+        .form-container button {
+            background-color: #4fc3f7; /* Bleu ciel pour le bouton */
+            color: white;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background-color: #29b6f6; /* Un bleu un peu plus foncé pour l'effet hover */
+        }
+
+        .form-container textarea {
+            resize: vertical;
+            height: 120px;
+        }
+
+        .form-container input[type="number"],
+        .form-container input[type="text"],
+        .form-container textarea {
+            background-color: #fafafa;
+        }
+    </style>
+    <script>
+        function showAlert(message) {
+            alert(message);
+        }
+    </script>
+</head>
+<body>
+
+<h1>Hotel Management</h1>
+
+<!-- Formulaire pour ajouter un hôtel -->
+<div class="form-container">
+    <form method="post" action="addhotel.jsp">
+        <h3>Add a new Hotel</h3>
+        <input type="number" name="id" placeholder="Hotel ID" required> <!-- Nouveau champ ID -->
+        <input type="text" name="name" placeholder="Hotel Name" required>
+        <input type="text" name="city" placeholder="City" required>
+        <input type="number" name="stars" placeholder="Stars (1-5)" min="1" max="5" required>
+        <textarea name="description" placeholder="Description" rows="3" required></textarea>
+        <input type="file" id="image" name="image" accept="image/png, image/jpeg">
+        <input type="number" name="agent_id" placeholder="Agent ID">
+
+        <button type="submit">Add Hotel</button>
+    </form>
+</div>
+
+<%
+    if ("POST".equalsIgnoreCase(request.getMethod())) {
+        String idStr = request.getParameter("id");
+        String name = request.getParameter("name");
+        String city = request.getParameter("city");
+        String starsStr = request.getParameter("stars");
+        String description = request.getParameter("description");
+        String image = request.getParameter("image");
+        String agentIdStr = request.getParameter("agent_id");
+
+        if (idStr == null || idStr.trim().isEmpty()) {
+            out.println("<p>Error: Hotel ID is required.</p>");
+            return;
+        }
+
+        int id = Integer.parseInt(idStr);
+        int stars = Integer.parseInt(starsStr);
+        int agentId = (agentIdStr != null && !agentIdStr.trim().isEmpty()) ? Integer.parseInt(agentIdStr) : 0;
+
+        String url = "jdbc:mysql://localhost:3306/hotel_management";
+        String user = "root";
+        String password = "triki";
+        Connection conn = null;
+        PreparedStatement stmt = null;
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            conn = DriverManager.getConnection(url, user, password);
+
+            String insertQuery = "INSERT INTO Hotel (id, name, city, stars, description, image, agent_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            stmt = conn.prepareStatement(insertQuery);
+            stmt.setInt(1, id);
+            stmt.setString(2, name);
+            stmt.setString(3, city);
+            stmt.setInt(4, stars);
+            stmt.setString(5, description);
+            stmt.setString(6, image);
+            stmt.setInt(7, agentId);
+
+            int result = stmt.executeUpdate();
+            if (result > 0) {
+                response.sendRedirect("hotel.jsp");  // Redirection vers la page hotel.jsp après ajout
+            } else {
+                out.println("<p>Error adding hotel.</p>");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.println("<p>Error: " + e.getMessage() + "</p>");
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+            if (conn != null) try { conn.close(); } catch (SQLException e) {}
+        }
+    }
+%>
+
+</body>
+</html>

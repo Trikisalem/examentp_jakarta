@@ -1,0 +1,168 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des agents</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        form input, form button {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        form button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        form button:hover {
+            background-color: #357ae8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 10px;
+        }
+        th {
+            background-color: #4285f4;
+            color: white;
+        }
+        a {
+            text-decoration: none;
+            color: #4285f4;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Gestion des Agents</h1>
+
+    <!-- Formulaire pour créer ou modifier un agent -->
+    <form method="post" action="agent.jsp">
+        <h2>Créer / Modifier un Agent</h2>
+        <input type="hidden" name="agentId" value="${param.agentId}">
+        <input type="text" name="username" placeholder="Nom d'utilisateur" value="${param.username}" required>
+        <input type="password" name="password" placeholder="Mot de passe" value="${param.password}" required>
+        <input type="email" name="email" placeholder="Email" value="${param.email}" required>
+        <button type="submit" name="action" value="save">Sauvegarder</button>
+    </form>
+
+    <!-- Liste des agents -->
+    <h2>Liste des Agents</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nom d'utilisateur</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <%
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
+
+            try {
+                // Connexion à la base de données
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/hotel", "root", "triki");
+
+                String action = request.getParameter("action");
+                String id = request.getParameter("id");
+
+                if ("save".equals(action)) {
+                    // Sauvegarder ou mettre à jour un agent
+                    String agentId = request.getParameter("agentId");
+                    String username = request.getParameter("username");
+                    String password = request.getParameter("password");
+                    String email = request.getParameter("email");
+
+                    if (agentId != null && !agentId.isEmpty()) {
+                        ps = conn.prepareStatement("UPDATE Account SET username = ?, password = ?, email = ? WHERE id = ?");
+                        ps.setString(1, username);
+                        ps.setString(2, password);
+                        ps.setString(3, email);
+                        ps.setInt(4, Integer.parseInt(agentId));
+                    } else {
+                        ps = conn.prepareStatement("INSERT INTO Account (username, password, email, role) VALUES (?, ?, ?, 'agent')");
+                        ps.setString(1, username);
+                        ps.setString(2, password);
+                        ps.setString(3, email);
+                    }
+                    ps.executeUpdate();
+                    response.sendRedirect("agent.jsp");
+                } else if ("delete".equals(action)) {
+                    // Supprimer un agent
+                    ps = conn.prepareStatement("DELETE FROM Account WHERE id = ?");
+                    ps.setInt(1, Integer.parseInt(id));
+                    ps.executeUpdate();
+                    response.sendRedirect("agent.jsp");
+                }
+
+                // Charger et afficher les agents
+                ps = conn.prepareStatement("SELECT id, username, email FROM Account WHERE role = 'agent'");
+                rs = ps.executeQuery();
+                while (rs.next()) {
+        %>
+        <tr>
+            <td><%= rs.getInt("id") %></td>
+            <td><%= rs.getString("username") %></td>
+            <td><%= rs.getString("email") %></td>
+            <td>
+                <a href="agent.jsp?action=edit&id=<%= rs.getInt("id") %>&username=<%= rs.getString("username") %>&email=<%= rs.getString("email") %>">Modifier</a>
+                <a href="agent.jsp?action=delete&id=<%= rs.getInt("id") %>" onclick="return confirm('Voulez-vous vraiment supprimer cet agent ?')">Supprimer</a>
+            </td>
+        </tr>
+        <%
+                }
+            } catch (Exception e) {
+                e.printStackTrace(out);
+            } finally {
+                try {
+                    if (rs != null) rs.close();
+                    if (ps != null) ps.close();
+                    if (conn != null) conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace(out);
+                }
+            }
+        %>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

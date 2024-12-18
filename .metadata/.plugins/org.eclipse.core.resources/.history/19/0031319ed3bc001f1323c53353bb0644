@@ -1,0 +1,222 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*, javax.servlet.http.HttpSession" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des agents</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-top: 30px;
+        }
+        .container {
+            max-width: 960px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .form-container {
+            margin-bottom: 30px;
+        }
+        .form-container input[type="text"],
+        .form-container input[type="password"],
+        .form-container input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fafafa;
+            box-sizing: border-box;
+        }
+        .form-container input[type="text"]:focus,
+        .form-container input[type="password"]:focus,
+        .form-container input[type="email"]:focus {
+            border-color: #4285f4;
+            box-shadow: 0 0 5px rgba(66, 133, 244, 0.2);
+        }
+        .form-container button {
+            padding: 12px 20px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .form-container button:hover {
+            background-color: #357ae8;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th {
+            background-color: #4285f4;
+            color: white;
+            padding: 12px;
+        }
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+        td.actions a {
+            padding: 6px 12px;
+            margin: 0 5px;
+            background-color: #4caf50;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        td.actions a:hover {
+            background-color: #45a049;
+        }
+        .actions a.delete {
+            background-color: #f44336;
+        }
+        .actions a.delete:hover {
+            background-color: #e53935;
+        }
+
+        /* Back Button */
+        .back-button {
+            padding: 10px 20px;
+            background-color: #ddd;
+            color: black;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background-color 0.3s ease;
+        }
+        .back-button:hover {
+            background-color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestion des agents</h1>
+
+        <% 
+            if (session == null || session.getAttribute("user") == null) {
+                // Si la session n'existe pas ou l'attribut "user" est absent, rediriger vers login.jsp
+                response.sendRedirect("index.jsp");
+                return;
+            }
+        %>
+
+        <div class="form-container">
+            <h2>Créer / Modifier un agent</h2>
+            <form method="post" action="agent.jsp">
+                <input type="hidden" name="agentId" value="${param.agentId}">
+                <input type="text" name="username" value="${param.username}" placeholder="Nom d'utilisateur" required><br>
+                <input type="password" name="password" value="${param.password}" placeholder="Mot de passe" required><br>
+                <input type="email" name="email" value="${param.email}" placeholder="Email" required><br>
+                <button type="submit" name="action" value="save">Sauvegarder</button>
+            </form>
+            <button class="back-button" onclick="history.back()">Retour</button>
+        </div>
+
+        <h2>Liste des agents</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom d'utilisateur</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            <%
+                // Connexion à la base de données
+                String url = "jdbc:mysql://localhost:3306/hotel_management";
+                String user = "root"; // Changez selon votre configuration
+                String pass = "triki"; // Changez selon votre configuration
+                Connection conn = null;
+                PreparedStatement ps = null;
+                ResultSet rs = null;
+
+                try {
+                    // Chargement du driver MySQL
+                    Class.forName("com.mysql.cj.jdbc.Driver");
+                    conn = DriverManager.getConnection(url, user, pass);
+
+                    String action = request.getParameter("action");
+                    String id = request.getParameter("agentId");
+                    String username = request.getParameter("username");
+                    String password = request.getParameter("password");
+                    String email = request.getParameter("email");
+
+                    if ("save".equals(action)) {
+                        if (id != null && !id.isEmpty()) {
+                            // Mise à jour
+                            ps = conn.prepareStatement("UPDATE Account SET username = ?, password = ?, email = ? WHERE id = ?");
+                            ps.setString(1, username);
+                            ps.setString(2, password);
+                            ps.setString(3, email);
+                            ps.setInt(4, Integer.parseInt(id));
+                        } else {
+                            // Ajout
+                            ps = conn.prepareStatement("INSERT INTO Account (username, password, email, role) VALUES (?, ?, ?, 'agent')");
+                            ps.setString(1, username);
+                            ps.setString(2, password);
+                            ps.setString(3, email);
+                        }
+                        ps.executeUpdate();
+                        response.sendRedirect("agent.jsp");
+                    } else if ("delete".equals(action)) {
+                        // Suppression
+                        ps = conn.prepareStatement("DELETE FROM Account WHERE id = ?");
+                        ps.setInt(1, Integer.parseInt(request.getParameter("id")));
+                        ps.executeUpdate();
+                        response.sendRedirect("agent.jsp");
+                    }
+
+                    // Liste des agents
+                    ps = conn.prepareStatement("SELECT id, username, email FROM Account WHERE role = 'agent'");
+                    rs = ps.executeQuery();
+                    while (rs.next()) {
+            %>
+            <tr>
+                <td><%= rs.getInt("id") %></td>
+                <td><%= rs.getString("username") %></td>
+                <td><%= rs.getString("email") %></td>
+                <td class="actions">
+                    <a href="agent.jsp?action=edit&agentId=<%= rs.getInt("id") %>&username=<%= rs.getString("username") %>&email=<%= rs.getString("email") %>">Modifier</a>
+                    <a href="agent.jsp?action=delete&id=<%= rs.getInt("id") %>" class="delete" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet agent ?')">Supprimer</a>
+                </td>
+            </tr>
+            <%
+                    }
+                } catch (Exception e) {
+                    out.println("<p style='color:red;'>Erreur : " + e.getMessage() + "</p>");
+                    e.printStackTrace();
+                } finally {
+                    try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+                    try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+                    try { if (conn != null) conn.close(); } catch (Exception ignored) {}
+                }
+            %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

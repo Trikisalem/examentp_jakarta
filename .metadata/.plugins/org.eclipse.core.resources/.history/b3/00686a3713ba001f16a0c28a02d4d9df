@@ -1,0 +1,255 @@
+<%@ page import="java.sql.*" errorPage="error.jsp" %>
+<%!
+    PreparedStatement pst;
+    ResultSet rs;
+%>
+
+<%
+    Connection c = null;
+    String url = "jdbc:mysql://localhost:3306/hotel";
+    String username = "root";
+    String password = "triki";
+
+    try {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        c = DriverManager.getConnection(url, username, password);
+        if (c != null) {
+            System.out.println("Connexion réussie à la base de données !");
+        } else {
+            System.out.println("Connexion échouée.");
+        }
+%>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SUNRISE HOTEL</title>
+    <link href="assets/css/bootstrap.css" rel="stylesheet" />
+    <link href="assets/css/font-awesome.css" rel="stylesheet" />
+    <link href="assets/css/custom-styles.css" rel="stylesheet" />
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css' />
+</head>
+<body>
+    <div id="wrapper">
+        <nav class="navbar navbar-default top-navbar" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="home.jsp">MAIN MENU</a>
+            </div>
+        </nav>
+
+        <div id="page-wrapper">
+            <div id="page-inner">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="page-header">ADD NEW ROOM TYPE</h1>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-5 col-sm-5">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">ADD NEW ROOM TYPE</div>
+                            <div class="panel-body">
+                                <form name="form" method="post">
+                                    <div class="form-group">
+                                        <label>Hotel</label>
+                                        <select name="hotel_id" class="form-control" required>
+                                            <option value selected></option>
+                                            <%
+                                                String hotelSql = "SELECT id, name FROM Hotel";
+                                                try {
+                                                    pst = c.prepareStatement(hotelSql);
+                                                    rs = pst.executeQuery();
+                                                    while (rs.next()) {
+                                            %>
+                                            <option value="<%= rs.getInt("id") %>"><%= rs.getString("name") %></option>
+                                            <%
+                                                    }
+                                                } finally {
+                                                    // Always close ResultSet and PreparedStatement
+                                                    if (rs != null) rs.close();
+                                                    if (pst != null) pst.close();
+                                                }
+                                            %>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Room Type *</label>
+                                        <input type="text" name="label" class="form-control" required />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Capacity *</label>
+                                        <input type="number" name="capacity" class="form-control" required />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Price *</label>
+                                        <input type="number" name="price" class="form-control" required />
+                                    </div>
+
+                                    <input type="submit" name="add" value="Add New Room Type" class="btn btn-primary">
+                                </form>
+
+                                <%
+                                    if(request.getParameter("add") != null) {
+                                        String hotelId = request.getParameter("hotel_id");
+                                        String label = request.getParameter("label");
+                                        String capacity = request.getParameter("capacity");
+                                        String price = request.getParameter("price");
+
+                                        // Vérifier si le type de chambre existe déjà pour cet hôtel
+                                        String check = "SELECT * FROM RoomType WHERE label = ? AND hotel_id = ?";
+                                        try {
+                                            pst = c.prepareStatement(check);
+                                            pst.setString(1, label);
+                                            pst.setInt(2, Integer.parseInt(hotelId));
+                                            rs = pst.executeQuery();
+
+                                            if (rs.next()) {
+                                %>
+                                                <script type="text/javascript"> alert('Room Type Already Exists') </script>
+                                <%
+                                            } else {
+                                                // Ajouter le nouveau type de chambre
+                                                String sql = "INSERT INTO RoomType (label, capacity, price, hotel_id) VALUES (?, ?, ?, ?)";
+                                                pst = c.prepareStatement(sql);
+                                                pst.setString(1, label);
+                                                pst.setInt(2, Integer.parseInt(capacity));
+                                                pst.setInt(3, Integer.parseInt(price));
+                                                pst.setInt(4, Integer.parseInt(hotelId));
+
+                                                if (pst.executeUpdate() > 0) {
+                                %>
+                                                    <script>alert("New Room Type Added")</script>
+                                <%
+                                                } else {
+                                %>
+                                                    <script>alert("Error! Check The System")</script>
+                                <%
+                                                }
+                                            }
+                                        } catch (SQLException e) {
+                                            e.printStackTrace(); // Log error
+                                            out.println("<script>alert('Database error occurred. Please try again later.');</script>");
+                                        } finally {
+                                            if (rs != null) rs.close();
+                                            if (pst != null) pst.close();
+                                        }
+                                    }
+                                %>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rooms Information Display -->
+                    <div class="col-md-6 col-sm-6">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">ROOM TYPES INFORMATION</div>
+                            <div class="panel-body">
+                                <div class="panel panel-default">
+                                    <%
+                                        String sql = "SELECT * FROM RoomType";
+                                        try {
+                                            pst = c.prepareStatement(sql);
+                                            rs = pst.executeQuery();
+                                    %>
+                                    <div class="panel-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped table-bordered table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Room Type ID</th>
+                                                        <th>Hotel Name</th>
+                                                        <th>Label</th>
+                                                        <th>Capacity</th>
+                                                        <th>Price</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <%
+                                                        while (rs.next()) {
+                                                            int id = rs.getInt("id");
+                                                            String hotelNameQuery = "SELECT name FROM Hotel WHERE id = ?";
+                                                            try {
+                                                                pst = c.prepareStatement(hotelNameQuery);
+                                                                pst.setInt(1, rs.getInt("hotel_id"));
+                                                                ResultSet hotelRs = pst.executeQuery();
+                                                                hotelRs.next();
+                                                                String hotelName = hotelRs.getString("name");
+                                                    %>
+                                                            <tr>
+                                                                <td><%= id %></td>
+                                                                <td><%= hotelName %></td>
+                                                                <td><%= rs.getString("label") %></td>
+                                                                <td><%= rs.getInt("capacity") %></td>
+                                                                <td><%= rs.getInt("price") %> €</td>
+                                                                <td>
+                                                                    <a href="editRoom.jsp?id=<%= id %>" class="btn btn-warning">Edit</a>
+                                                                    <a href="deleteRoom.jsp?id=<%= id %>" class="btn btn-danger">Delete</a>
+                                                                </td>
+                                                            </tr>
+                                                    <%
+                                                                hotelRs.close(); // Close hotel resultSet
+                                                            }
+                                                            finally {
+                                                                if (pst != null) pst.close();
+                                                            }
+                                                        }
+                                                    %>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <%
+                                            } catch (SQLException e) {
+                                                e.printStackTrace(); // Log error
+                                            } finally {
+                                                if (rs != null) rs.close();
+                                                if (pst != null) pst.close();
+                                            }
+                                    %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- /.row -->
+            </div> <!-- /.page-inner -->
+        </div> <!-- /.page-wrapper -->
+    </div> <!-- /.wrapper -->
+
+    <script src="assets/js/jquery-1.10.2.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/jquery.metisMenu.js"></script>
+    <script src="assets/js/custom-scripts.js"></script>
+
+</body>
+</html>
+<%
+    } catch (ClassNotFoundException e) {
+        e.printStackTrace(); // Log error
+        out.println("<script>alert('JDBC Driver not found.');</script>");
+    } catch (SQLException e) {
+        e.printStackTrace(); // Log error
+        out.println("<script>alert('Database connection error.');</script>");
+    } finally {
+        // Close the connection outside of your main logic
+        if (c != null) {
+            try {
+                c.close();
+            } catch (SQLException e) {
+                e.printStackTrace(); // Log error
+            }
+        }
+    }
+%>

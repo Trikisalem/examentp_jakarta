@@ -1,0 +1,32 @@
+package com.service;
+
+import java.util.List;
+
+import com.model.Hotel;
+
+import repository.HotelRepository;
+
+public class HotelService {
+    private final HotelRepository hotelRepository;
+
+    public HotelService(HotelRepository hotelRepository) {
+        this.hotelRepository = hotelRepository;
+    }
+
+    public List<Hotel> getAllHotels() {
+        return hotelRepository.findAll();
+    }
+
+    public Hotel getHotelById(Long id) {
+        return hotelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Hotel not found with ID: " + id));
+    }
+
+    public Hotel addHotel(Hotel hotel) {
+        return hotelRepository.save(hotel);
+    }
+
+    public void deleteHotel(Long id) {
+        hotelRepository.deleteById(id);
+    }
+}

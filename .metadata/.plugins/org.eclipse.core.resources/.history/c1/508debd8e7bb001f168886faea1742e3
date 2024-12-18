@@ -1,0 +1,38 @@
+package servlet;
+
+import dao.HotelDAO;
+import model.Hotel;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.io.IOException;
+import java.sql.*;
+import java.util.List;
+
+public class SearchHotels extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String city = request.getParameter("city");
+        String stars = request.getParameter("stars");
+        List<Hotel> hotels = null;
+
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/your_db_name", "your_db_user", "your_db_password")) {
+            HotelDAO hotelDAO = new HotelDAO(conn);
+
+            if (city != null && !city.isEmpty() && stars != null && !stars.isEmpty()) {
+                hotels = hotelDAO.getHotelsByCityAndStars(city, Integer.parseInt(stars));
+            } else if (city != null && !city.isEmpty()) {
+                hotels = hotelDAO.getHotelsByCity(city);
+            } else if (stars != null && !stars.isEmpty()) {
+                hotels = hotelDAO.getHotelsByStars(Integer.parseInt(stars));
+            } else {
+                hotels = hotelDAO.getAllHotels();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        request.setAttribute("hotels", hotels);
+        RequestDispatcher dispatcher = request.getRequestDispatcher("searchHotels.jsp");
+        dispatcher.forward(request, response);
+    }
+}

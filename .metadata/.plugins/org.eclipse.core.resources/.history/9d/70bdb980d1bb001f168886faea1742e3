@@ -1,0 +1,86 @@
+package servlet;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import dao.HotelDAO;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+/**
+ * Servlet implementation class DeleteHotelServlet
+ */
+@WebServlet("/DeleteHotelServlet")
+public class DeleteHotelServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    private HotelDAO hotelDAO;
+    private Connection connection;
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        try {
+            // Initialisation de la connexion à la base de données
+            connection = DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/hotel_management", // Remplacez par votre URL JDBC
+                "root", // Nom d'utilisateur
+                "password" // Mot de passe
+            );
+            hotelDAO = new HotelDAO(connection);
+        } catch (SQLException e) {
+            throw new ServletException("Erreur lors de la connexion à la base de données", e);
+        }
+    }
+
+    /**
+     * Gère les requêtes POST pour supprimer un hôtel.
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Récupérer l'identifiant de l'hôtel depuis le formulaire
+        String hotelIdStr = request.getParameter("hotelId");
+
+        try {
+            // Validation de l'identifiant
+            if (hotelIdStr == null || hotelIdStr.isEmpty()) {
+                throw new IllegalArgumentException("L'identifiant de l'hôtel est requis.");
+            }
+
+            int hotelId = Integer.parseInt(hotelIdStr);
+
+            // Suppression de l'hôtel via le DAO
+            hotelDAO.deleteHotel(hotelId);
+
+            // Redirection vers une page de succès ou la liste des hôtels
+            response.sendRedirect("hotelList.jsp");
+
+        } catch (IllegalArgumentException e) {
+            // Gestion des erreurs de validation
+            request.setAttribute("errorMessage", "Données invalides : " + e.getMessage());
+            request.getRequestDispatcher("deleteHotel.jsp").forward(request, response);
+        } catch (Exception e) {
+            // Gestion des erreurs SQL
+            throw new ServletException("Erreur lors de la suppression de l'hôtel", e);
+        }
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        try {
+            if (connection != null) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}

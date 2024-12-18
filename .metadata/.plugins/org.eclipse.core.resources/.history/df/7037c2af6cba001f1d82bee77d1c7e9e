@@ -1,0 +1,194 @@
+<%@ page import="java.sql.*, java.util.*" %>
+<%@ page contentType="text/html; charset=UTF-8"%>
+<%@ page language="java" %>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Reservation</title>
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+</head>
+<body>
+    <div id="page-wrapper">
+        <div id="page-inner">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1 class="page-header">
+                        Room Reservation <small>Complete your booking</small>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Reservation Form -->
+            <div class="col-md-8 col-sm-8">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        Make a Reservation
+                    </div>
+                    <div class="panel-body">
+                        <form action="reservation.jsp" method="POST">
+                            <div class="form-group">
+                                <label for="title">Title</label>
+                                <select name="title" id="title" class="form-control">
+                                    <option value="Mr">Mr</option>
+                                    <option value="Ms">Ms</option>
+                                    <option value="Dr">Dr</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="fname">First Name</label>
+                                <input type="text" name="fname" id="fname" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lname">Last Name</label>
+                                <input type="text" name="lname" id="lname" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" name="email" id="email" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="troom">Room Type</label>
+                                <select name="troom" id="troom" class="form-control">
+                                    <option value="Superior Room">Superior Room</option>
+                                    <option value="Deluxe Room">Deluxe Room</option>
+                                    <option value="Single Room">Single Room</option>
+                                    <option value="Guest House">Guest House</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="nroom">Number of Rooms</label>
+                                <input type="number" name="nroom" id="nroom" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="bed">Bedding Type</label>
+                                <select name="bed" id="bed" class="form-control">
+                                    <option value="Single">Single</option>
+                                    <option value="Double">Double</option>
+                                    <option value="Triple">Triple</option>
+                                    <option value="Quad">Quad</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="meal">Meal Plan</label>
+                                <select name="meal" id="meal" class="form-control">
+                                    <option value="Room only">Room only</option>
+                                    <option value="Breakfast">Breakfast</option>
+                                    <option value="Half Board">Half Board</option>
+                                    <option value="Full Board">Full Board</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cin">Check-in Date</label>
+                                <input type="date" name="cin" id="cin" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="cout">Check-out Date</label>
+                                <input type="date" name="cout" id="cout" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="days">Number of Days</label>
+                                <input type="number" name="days" id="days" class="form-control" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Book Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reservation Details -->
+            <%
+            if(request.getMethod().equalsIgnoreCase("POST")) {
+                // Retrieve form data
+                String title = request.getParameter("title");
+                String fname = request.getParameter("fname");
+                String lname = request.getParameter("lname");
+                String email = request.getParameter("email");
+                String troom = request.getParameter("troom");
+                int nroom = Integer.parseInt(request.getParameter("nroom"));
+                String bed = request.getParameter("bed");
+                String meal = request.getParameter("meal");
+                String cin = request.getParameter("cin");
+                String cout = request.getParameter("cout");
+                int days = Integer.parseInt(request.getParameter("days"));
+
+                // Calculate pricing
+                double roomPrice = 0;
+                if ("Superior Room".equals(troom)) roomPrice = 320;
+                else if ("Deluxe Room".equals(troom)) roomPrice = 220;
+                else if ("Single Room".equals(troom)) roomPrice = 150;
+                else if ("Guest House".equals(troom)) roomPrice = 180;
+
+                double bedPrice = 0;
+                if ("Single".equals(bed)) bedPrice = roomPrice * 0.04;
+                else if ("Double".equals(bed)) bedPrice = roomPrice * 0.05;
+                else if ("Triple".equals(bed)) bedPrice = roomPrice * 0.06;
+                else if ("Quad".equals(bed)) bedPrice = roomPrice * 0.07;
+
+                double mealPrice = 0;
+                if ("Room only".equals(meal)) mealPrice = 0;
+                else if ("Breakfast".equals(meal)) mealPrice = bedPrice * 0.4;
+                else if ("Half Board".equals(meal)) mealPrice = bedPrice * 0.5;
+                else if ("Full Board".equals(meal)) mealPrice = bedPrice * 0.6;
+
+                double totalPrice = roomPrice * days * nroom + mealPrice * days + bedPrice * days;
+
+                // Save to database
+                Connection conn = DriverManager.getConnection("jdbc:mysql://localhost/hotel", "root", "");
+                String query = "INSERT INTO reservations(title, fname, lname, email, troom, nroom, bed, meal, cin, cout, days, total_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement ps = conn.prepareStatement(query);
+                ps.setString(1, title);
+                ps.setString(2, fname);
+                ps.setString(3, lname);
+                ps.setString(4, email);
+                ps.setString(5, troom);
+                ps.setInt(6, nroom);
+                ps.setString(7, bed);
+                ps.setString(8, meal);
+                ps.setString(9, cin);
+                ps.setString(10, cout);
+                ps.setInt(11, days);
+                ps.setDouble(12, totalPrice);
+
+                ps.executeUpdate();
+            %>
+
+            <!-- Display reservation details -->
+            <div class="panel panel-success">
+                <div class="panel-heading">
+                    Reservation Summary
+                </div>
+                <div class="panel-body">
+                    <p><strong>Booking Confirmed</strong></p>
+                    <p><strong>Customer Name:</strong> <%= title %> <%= fname %> <%= lname %></p>
+                    <p><strong>Email:</strong> <%= email %></p>
+                    <p><strong>Room Type:</strong> <%= troom %></p>
+                    <p><strong>Number of Rooms:</strong> <%= nroom %></p>
+                    <p><strong>Bedding Type:</strong> <%= bed %></p>
+                    <p><strong>Meal Plan:</strong> <%= meal %></p>
+                    <p><strong>Check-in Date:</strong> <%= cin %></p>
+                    <p><strong>Check-out Date:</strong> <%= cout %></p>
+                    <p><strong>Number of Days:</strong> <%= days %></p>
+                    <p><strong>Total Price:</strong> <%= totalPrice %> TND</p>
+                </div>
+            </div>
+
+            <%
+            }
+            %>
+        </div>
+    </div>
+</body>
+</html>

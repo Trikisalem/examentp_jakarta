@@ -1,0 +1,198 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<%@ page import="java.util.*" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Hotel</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn {
+            padding: 8px 12px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .btn:hover {
+            background-color: #0b7dda;
+        }
+        .form-container {
+            margin: 20px 0;
+        }
+        .form-container input {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-container button {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Update Hotel</h1>
+
+<%
+    String hotelId = request.getParameter("hotelId");
+    if (hotelId == null || hotelId.trim().isEmpty()) {
+        out.println("<p>Error: Hotel ID is required.</p>");
+        return;
+    }
+
+    String url = "jdbc:mysql://localhost:3306/hotel_management";
+    String user = "root";
+    String password = "triki";
+    Connection conn = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+
+    try {
+        // Charger le driver JDBC
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        conn = DriverManager.getConnection(url, user, password);
+
+        // Récupérer les informations actuelles de l'hôtel
+        String query = "SELECT * FROM Hotel WHERE hotel_id = ?";
+        stmt = conn.prepareStatement(query);
+        stmt.setInt(1, Integer.parseInt(hotelId));
+        rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            // Afficher les informations dans le formulaire
+            String name = rs.getString("name");
+            String city = rs.getString("city");
+            int stars = rs.getInt("stars");
+            String description = rs.getString("description");
+            String image = rs.getString("image");
+            int agentId = rs.getInt("agent_id");
+%>
+
+<div class="form-container">
+    <form method="post" action="updateHotel.jsp">
+        <h3>Update Hotel</h3>
+        <input type="hidden" name="hotelId" value="<%= hotelId %>">
+        <input type="text" name="name" value="<%= name %>" placeholder="Hotel Name" required>
+        <input type="text" name="city" value="<%= city %>" placeholder="City" required>
+        <input type="number" name="stars" value="<%= stars %>" placeholder="Stars (1-5)" min="1" max="5" required>
+        <textarea name="description" placeholder="Description" rows="3" required><%= description %></textarea>
+        <input type="text" name="image" value="<%= image %>" placeholder="Image URL" required>
+        <input type="number" name="agentId" value="<%= agentId %>" placeholder="Agent ID" required>
+        <button type="submit">Update Hotel</button>
+    </form>
+</div>
+
+<%
+        } else {
+            out.println("<p>Hotel not found.</p>");
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        out.println("<p>Error: " + e.getMessage() + "</p>");
+    } finally {
+        // Fermer les ressources
+        if (rs != null) rs.close();
+        if (stmt != null) stmt.close();
+        if (conn != null) conn.close();
+    }
+
+    // Traitement du formulaire de mise à jour
+    if ("POST".equalsIgnoreCase(request.getMethod())) {
+        String name = request.getParameter("name");
+        String city = request.getParameter("city");
+        String starsStr = request.getParameter("stars");
+        String description = request.getParameter("description");
+        String image = request.getParameter("image");
+        String agentIdStr = request.getParameter("agentId");
+        String hotelIdStr = request.getParameter("hotelId");
+
+        int stars = 0;
+        int agentId = 0;
+        int hotelId = Integer.parseInt(hotelIdStr);
+
+        try {
+            if (starsStr == null || starsStr.trim().isEmpty()) {
+                throw new IllegalArgumentException("Le nombre d'étoiles est requis.");
+            }
+
+            stars = Integer.parseInt(starsStr);
+            if (stars < 1 || stars > 5) {
+                throw new IllegalArgumentException("Le nombre d'étoiles doit être compris entre 1 et 5.");
+            }
+
+            if (agentIdStr == null || agentIdStr.trim().isEmpty()) {
+                throw new IllegalArgumentException("L'ID de l'agent est requis.");
+            }
+
+            agentId = Integer.parseInt(agentIdStr);
+
+            // Mise à jour des informations dans la base de données
+            try {
+                conn = DriverManager.getConnection(url, user, password);
+
+                String updateQuery = "UPDATE Hotel SET name = ?, city = ?, stars = ?, description = ?, image = ?, agent_id = ? WHERE hotel_id = ?";
+                stmt = conn.prepareStatement(updateQuery);
+                stmt.setString(1, name);
+                stmt.setString(2, city);
+                stmt.setInt(3, stars);
+                stmt.setString(4, description);
+                stmt.setString(5, image);
+                stmt.setInt(6, agentId);
+                stmt.setInt(7, hotelId);
+
+                int result = stmt.executeUpdate();
+                if (result > 0) {
+                    out.println("<p>Hotel updated successfully!</p>");
+                } else {
+                    out.println("<p>Error updating hotel.</p>");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                out.println("<p>Error: " + e.getMessage() + "</p>");
+            } finally {
+                if (stmt != null) stmt.close();
+                if (conn != null) conn.close();
+            }
+
+        } catch (Exception e) {
+            out.println("<p>Error: " + e.getMessage() + "</p>");
+        }
+    }
+%>
+
+</body>
+</html>

@@ -1,0 +1,264 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*, javax.servlet.http.HttpSession" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des agents</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #0066cc; /* Couleur personnalisée pour le titre */
+            font-size: 2.5rem;
+            margin-top: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Form Styles */
+        .form-container {
+            margin-bottom: 40px;
+        }
+        .form-container h2 {
+            font-size: 1.5rem;
+            color: #4285f4;
+            margin-bottom: 20px;
+        }
+        .form-container input[type="text"],
+        .form-container input[type="password"],
+        .form-container input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+            box-sizing: border-box;
+            transition: border 0.3s ease;
+        }
+        .form-container input[type="text"]:focus,
+        .form-container input[type="password"]:focus,
+        .form-container input[type="email"]:focus {
+            border-color: #4285f4;
+            box-shadow: 0 0 10px rgba(66, 133, 244, 0.2);
+        }
+        .form-container button {
+            padding: 12px 20px;
+            background-color: #4285f4;
+            color: #fff;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        .form-container button:hover {
+            background-color: #357ae8;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: #4285f4;
+            color: #fff;
+            font-size: 1.1rem;
+            padding: 15px;
+        }
+        td {
+            font-size: 1rem;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        td.actions a {
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+            color: #fff;
+            background-color: #4285f4;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+        td.actions a:hover {
+            background-color: #357ae8;
+            transform: translateY(-2px);
+        }
+
+        /* Button Styles */
+        .back-button {
+            background-color: #4285f4;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            margin-top: 30px;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        .back-button:hover {
+            background-color: #357ae8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .form-container input[type="text"],
+            .form-container input[type="password"],
+            .form-container input[type="email"],
+            .form-container button {
+                width: 100%;
+            }
+            table {
+                font-size: 0.9rem;
+            }
+            td.actions a {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestion des agents</h1>
+
+        <% 
+            if (session == null || session.getAttribute("user") == null) {
+                // Si la session n'existe pas ou l'attribut "user" est absent, rediriger vers login.jsp
+                response.sendRedirect("index.jsp");
+                return;
+            }
+        %>
+
+        <div class="form-container">
+            
+            <form method="post" action="agent.jsp">
+                <input type="hidden" name="agentId" value="${param.agentId}">
+                <input type="text" name="username" value="${param.username}" placeholder="Nom d'utilisateur" required><br>
+                <input type="password" name="password" value="${param.password}" placeholder="Mot de passe" required><br>
+                <input type="email" name="email" value="${param.email}" placeholder="Email" required><br>
+                <button type="submit" name="action" value="save">Sauvegarder</button>
+            </form>
+          <button class="back-button" onclick="window.location.href='C:\Users\user\Desktop\backend\hotel\src\main\webapp\index.jsp';">Retour</button>
+
+        </div>
+
+        <h2>Liste des agents</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom d'utilisateur</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            <%
+                // Connexion à la base de données
+                String url = "jdbc:mysql://localhost:3306/hotel_management";
+                String user = "root"; // Changez selon votre configuration
+                String pass = "triki"; // Changez selon votre configuration
+                Connection conn = null;
+                PreparedStatement ps = null;
+                ResultSet rs = null;
+
+                try {
+                    // Chargement du driver MySQL
+                    Class.forName("com.mysql.cj.jdbc.Driver");
+                    conn = DriverManager.getConnection(url, user, pass);
+
+                    String action = request.getParameter("action");
+                    String id = request.getParameter("agentId");
+                    String username = request.getParameter("username");
+                    String password = request.getParameter("password");
+                    String email = request.getParameter("email");
+
+                    if ("save".equals(action)) {
+                        if (id != null && !id.isEmpty()) {
+                            // Mise à jour
+                            ps = conn.prepareStatement("UPDATE Account SET username = ?, password = ?, email = ? WHERE id = ?");
+                            ps.setString(1, username);
+                            ps.setString(2, password);
+                            ps.setString(3, email);
+                            ps.setInt(4, Integer.parseInt(id));
+                        } else {
+                            // Ajout
+                            ps = conn.prepareStatement("INSERT INTO Account (username, password, email, role) VALUES (?, ?, ?, 'agent')");
+                            ps.setString(1, username);
+                            ps.setString(2, password);
+                            ps.setString(3, email);
+                        }
+                        ps.executeUpdate();
+                        response.sendRedirect("agent.jsp");
+                    } else if ("delete".equals(action)) {
+                        // Suppression
+                        ps = conn.prepareStatement("DELETE FROM Account WHERE id = ?");
+                        ps.setInt(1, Integer.parseInt(request.getParameter("id")));
+                        ps.executeUpdate();
+                        response.sendRedirect("agent.jsp");
+                    }
+
+                    // Liste des agents
+                    ps = conn.prepareStatement("SELECT id, username, email FROM Account WHERE role = 'agent'");
+                    rs = ps.executeQuery();
+                    while (rs.next()) {
+            %>
+            <tr>
+                <td><%= rs.getInt("id") %></td>
+                <td><%= rs.getString("username") %></td>
+                <td><%= rs.getString("email") %></td>
+                <td class="actions">
+                    <a href="agent.jsp?action=edit&agentId=<%= rs.getInt("id") %>&username=<%= rs.getString("username") %>&email=<%= rs.getString("email") %>" class="edit">Modifier</a>
+                    <a href="agent.jsp?action=delete&id=<%= rs.getInt("id") %>" class="delete" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet agent ?')">Supprimer</a>
+                </td>
+            </tr>
+            <%
+                    }
+                } catch (Exception e) {
+                    out.println("<p style='color:red;'>Erreur : " + e.getMessage() + "</p>");
+                    e.printStackTrace();
+                } finally {
+                    try { if (rs != null) rs.close(); } catch (Exception ignored) {}
+                    try { if (ps != null) ps.close(); } catch (Exception ignored) {}
+                    try { if (conn != null) conn.close(); } catch (Exception ignored) {}
+                }
+            %>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+

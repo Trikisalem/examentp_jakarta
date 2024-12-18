@@ -1,0 +1,162 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Tableau de Bord</title>
+    
+    <!-- Google Font Import -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Votre fichier CSS -->
+    <style>
+        /* ===== Google Font Import - Poppins ===== */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600&display=swap');
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        :root{
+            /* ===== Colors ===== */
+            --primary-color: #0E4BF1;
+            --panel-color: #FFF;
+            --text-color: #000;
+            --black-light-color: #707070;
+            --border-color: #e6e5e5;
+            --toggle-color: #DDD;
+            --box1-color: #4DA3FF;
+            --box2-color: #FFE6AC;
+            --box3-color: #E7D1FC;
+            --title-icon-color: #fff;
+            
+            /* ====== Transition ====== */
+            --tran-05: all 0.5s ease;
+            --tran-03: all 0.3s ease;
+            --tran-03: all 0.2s ease;
+        }
+        body{
+            min-height: 100vh;
+            background-color: var(--primary-color);
+        }
+        body.dark{
+            --primary-color: #3A3B3C;
+            --panel-color: #242526;
+            --text-color: #CCC;
+            --black-light-color: #CCC;
+            --border-color: #4D4C4C;
+            --toggle-color: #FFF;
+            --box1-color: #3A3B3C;
+            --box2-color: #3A3B3C;
+            --box3-color: #3A3B3C;
+            --title-icon-color: #CCC;
+        }
+        /* === Custom Scroll Bar CSS === */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #0b3cc1;
+        }
+        body.dark::-webkit-scrollbar-thumb:hover,
+        body.dark .activity-data::-webkit-scrollbar-thumb:hover{
+            background: #3A3B3C;
+        }
+        nav{
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 250px;
+            padding: 10px 14px;
+            background-color: var(--panel-color);
+            border-right: 1px solid var(--border-color);
+            transition: var(--tran-05);
+        }
+        nav.close{
+            width: 73px;
+        }
+        /* Reste du CSS */
+        /* (collez le reste de votre CSS ici) */
+    </style>
+</head>
+<body>
+
+    <!-- Menu de Navigation -->
+    <nav>
+        <div class="logo-name">
+            <div class="logo-image">
+                <img src="logo.png" alt="Logo">
+            </div>
+            <div class="logo_name">Mon Application</div>
+        </div>
+
+        <!-- Menu -->
+        <ul class="menu-items">
+            <li><a href="#"><i class="fas fa-home"></i><span class="link-name">Accueil</span></a></li>
+            <li><a href="#"><i class="fas fa-cogs"></i><span class="link-name">Paramètres</span></a></li>
+            <!-- Ajoutez d'autres éléments de menu ici -->
+        </ul>
+
+        <!-- Mode sombre -->
+        <div class="logout-mode">
+            <div class="mode">
+                <span>Mode Sombre</span>
+                <div class="mode-toggle">
+                    <div class="switch"></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu Principal -->
+    <div class="dashboard">
+        <div class="top">
+            <div class="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="search-box">
+                <input type="text" placeholder="Rechercher...">
+                <i class="fas fa-search"></i>
+            </div>
+            <img src="user-avatar.jpg" alt="Utilisateur">
+        </div>
+
+        <div class="dash-content">
+            <div class="title">
+                <i class="fas fa-tachometer-alt"></i>
+                <div class="text">Tableau de Bord</div>
+            </div>
+            <div class="boxes">
+                <div class="box">
+                    <i class="fas fa-users"></i>
+                    <div class="text">Utilisateurs</div>
+                    <div class="number">25</div>
+                </div>
+                <div class="box box2">
+                    <i class="fas fa-box"></i>
+                    <div class="text">Commandes</div>
+                    <div class="number">12</div>
+                </div>
+                <div class="box box3">
+                    <i class="fas fa-chart-line"></i>
+                    <div class="text">Ventes</div>
+                    <div class="number">80</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+

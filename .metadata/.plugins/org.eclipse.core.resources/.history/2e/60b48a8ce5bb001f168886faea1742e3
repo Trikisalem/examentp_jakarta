@@ -1,0 +1,47 @@
+package dao;
+
+import model.Hotel;
+import connecteur.MySQLConnectionTest;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class HotelDAO {
+
+    private MySQLConnectionTest connection;
+
+    // Constructeur avec connexion
+    public HotelDAO(MySQLConnectionTest connection) {
+        this.connection = connection;
+    }
+
+    // Méthode pour rechercher des hôtels
+    public List<Hotel> searchHotels(String city, int stars) throws SQLException {
+        List<Hotel> hotels = new ArrayList<>();
+        String query = "SELECT * FROM hotel WHERE city LIKE ? AND stars = ?";
+
+        try (Connection conn = connection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, "%" + city + "%");  // Recherche dans la ville avec des caractères génériques
+            stmt.setInt(2, stars);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Hotel hotel = new Hotel(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("city"),
+                        rs.getInt("stars"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getInt("agent_id")
+                    );
+                    hotels.add(hotel);
+                }
+            }
+        }
+
+        return hotels;
+    }
+}

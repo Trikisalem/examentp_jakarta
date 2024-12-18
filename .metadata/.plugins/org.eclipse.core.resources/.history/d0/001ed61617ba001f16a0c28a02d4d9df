@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         id="WebApp_ID" version="5.0">
+
+    <display-name>HotelMangement</display-name>
+
+    <!-- Définition de la page d'accueil -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>default.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- Déclaration d'un servlet de dispatcher pour gérer les requêtes -->
+    <servlet>
+        <servlet-name>dispatcher</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!-- Configuration des ressources statiques -->
+    <!-- Dossier CSS -->
+    <servlet>
+        <servlet-name>resources</servlet-name>
+        <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+        <init-param>
+            <param-name>dirAllowed</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>resources</servlet-name>
+        <url-pattern>/css/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Dossier Images -->
+    <servlet-mapping>
+        <servlet-name>resources</servlet-name>
+        <url-pattern>/images/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Dossier JavaScript -->
+    <servlet-mapping>
+        <servlet-name>resources</servlet-name>
+        <url-pattern>/js/*</url-pattern>
+    </servlet-mapping>
+
+</web-app>

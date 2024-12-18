@@ -1,0 +1,165 @@
+package dao;
+
+import model.Hotel;
+import connecteur.MySQLConnectionTest;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class HotelDAO {
+
+    private MySQLConnectionTest connection;
+
+    // Constructeur avec connexion
+    public HotelDAO(MySQLConnectionTest connection) {
+        this.connection = connection;
+    }
+
+    // Constructeur sans connexion (par défaut)
+    public HotelDAO() {
+        this.connection = new MySQLConnectionTest();  // Utiliser la connexion par défaut
+    }
+
+    // Méthode pour ajouter un hôtel dans la base de données
+    public void addHotel(Hotel hotel) throws SQLException {
+        String query = "INSERT INTO hotel (name, city, stars, description, image, agent_id) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("La connexion à la base de données a échoué");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, hotel.getName());
+                stmt.setString(2, hotel.getCity());
+                stmt.setInt(3, hotel.getStars());
+                stmt.setString(4, hotel.getDescription());
+                stmt.setString(5, hotel.getImage());
+                stmt.setInt(6, hotel.getAgentId());
+
+                stmt.executeUpdate();
+                System.out.println("Hotel ajouté avec succès !");
+            }
+        }
+    }
+
+    // Méthode pour supprimer un hôtel dans la base de données
+    public void deleteHotel(int id) throws SQLException {
+        String query = "DELETE FROM hotel WHERE id = ?";
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("La connexion à la base de données a échoué");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, id);
+
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    System.out.println("Hotel avec l'ID " + id + " supprimé avec succès.");
+                } else {
+                    System.out.println("Aucun hôtel trouvé avec l'ID " + id);
+                }
+            }
+        }
+    }
+
+    // Méthode pour mettre à jour un hôtel
+    public void updateHotel(Hotel hotel) throws SQLException {
+        String query = "UPDATE hotel SET name = ?, city = ?, stars = ?, description = ?, image = ?, agent_id = ? WHERE id = ?";
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("La connexion à la base de données a échoué");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, hotel.getName());
+                stmt.setString(2, hotel.getCity());
+                stmt.setInt(3, hotel.getStars());
+                stmt.setString(4, hotel.getDescription());
+                stmt.setString(5, hotel.getImage());
+                stmt.setInt(6, hotel.getAgentId());
+                stmt.setInt(7, hotel.getId());
+
+                int rowsUpdated = stmt.executeUpdate();
+                if (rowsUpdated > 0) {
+                    System.out.println("Hotel mis à jour avec succès !");
+                } else {
+                    System.out.println("Aucun hôtel trouvé avec l'ID donné.");
+                }
+            }
+        }
+    }
+
+    // Méthode pour obtenir un hôtel par ID
+    public Hotel getHotelById(int hotelId) throws SQLException {
+        String query = "SELECT * FROM hotel WHERE id = ?";
+        Hotel hotel = null;
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("La connexion à la base de données a échoué");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, hotelId);
+
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    hotel = new Hotel(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("city"),
+                        rs.getInt("stars"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getInt("agent_id")
+                    );
+                }
+            }
+        }
+
+        return hotel;
+    }
+
+    // Méthode pour rechercher des hôtels
+    public List<Hotel> searchHotels(String city, int stars) throws SQLException {
+        List<Hotel> hotels = new ArrayList<>();
+        String query = "SELECT * FROM hotel WHERE city LIKE ? AND stars = ?";
+
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("La connexion à la base de données a échoué");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, "%" + city + "%");
+                stmt.setInt(2, stars);
+
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Hotel hotel = new Hotel(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("city"),
+                        rs.getInt("stars"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getInt("agent_id")
+                    );
+                    hotels.add(hotel);
+                }
+            }
+        }
+
+        return hotels;
+    }
+
+    // Méthode pour fermer la connexion à la base de données (si nécessaire, mais dans ce cas non requise)
+    public void close() {
+        // Cette méthode peut être utilisée si vous avez besoin de fermer explicitement la connexion,
+        // mais en utilisant `try-with-resources`, la connexion est déjà fermée automatiquement.
+    }
+}

@@ -1,0 +1,55 @@
+package servlet;
+
+import connecteur.DBConnect;
+import dao.AgentDAO;
+import model.Agent;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+@WebServlet("/addAgent")
+public class AddAgentServlet extends HttpServlet {
+
+    private static final long serialVersionUID = 1L;
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupération des paramètres du formulaire
+        String firstName = request.getParameter("firstName");
+        String lastName = request.getParameter("lastName");
+        String email = request.getParameter("email");
+        String password = request.getParameter("password");
+
+        // Créer un objet Agent
+        Agent agent = new Agent();
+        agent.setFirstName(firstName);
+        agent.setLastName(lastName);
+        agent.setEmail(email);
+        agent.setPassword(password);
+
+        // Ajouter l'agent dans la base de données
+        try (Connection connection = DBConnect.getConnection()) {
+            AgentDAO agentDAO = new AgentDAO(connection);
+            agentDAO.addAgent(agent);
+
+            // Rediriger vers la page de confirmation ou d'affichage de la liste des agents
+            response.sendRedirect("agentsList.jsp");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Afficher un message d'erreur si l'ajout échoue
+            response.getWriter().println("Erreur lors de l'ajout de l'agent : " + e.getMessage());
+        }
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Afficher le formulaire d'ajout d'agent
+        request.getRequestDispatcher("/WEB-INF/addAgentForm.jsp").forward(request, response);
+    }
+}

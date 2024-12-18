@@ -1,0 +1,60 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Hotel</title>
+</head>
+<body>
+<%
+    // Récupération des données du formulaire
+    String name = request.getParameter("name");
+    String city = request.getParameter("city");
+    int stars = Integer.parseInt(request.getParameter("stars"));
+    String description = request.getParameter("description");
+    String image = request.getParameter("image");
+    int agentId = Integer.parseInt(request.getParameter("agentId"));
+
+    // Connexion à la base de données
+    String url = "jdbc:mysql://localhost:3306/hotel_management";
+    String user = "root";
+    String password = "triki";
+
+    Connection conn = null;
+    PreparedStatement stmt = null;
+
+    try {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        conn = DriverManager.getConnection(url, user, password);
+
+        // Requête pour insérer un nouvel hôtel
+        String sql = "INSERT INTO Hotel (name, city, stars, description, image, agentId) VALUES (?, ?, ?, ?, ?, ?)";
+        stmt = conn.prepareStatement(sql);
+        stmt.setString(1, name);
+        stmt.setString(2, city);
+        stmt.setInt(3, stars);
+        stmt.setString(4, description);
+        stmt.setString(5, image);
+        stmt.setInt(6, agentId);
+
+        int rowsInserted = stmt.executeUpdate();
+        if (rowsInserted > 0) {
+%>
+            <p>Hotel added successfully!</p>
+            <a href="hotel.jsp">Back to Hotel Management</a>
+<%
+        } else {
+%>
+            <p>Error: Unable to add hotel.</p>
+            <a href="hotel.jsp">Try Again</a>
+<%
+        }
+    } catch (Exception e) {
+        out.println("<p>Error: " + e.getMessage() + "</p>");
+    } finally {
+        if (stmt != null) stmt.close();
+        if (conn != null) conn.close();
+    }
+%>
+</body>
+</html>

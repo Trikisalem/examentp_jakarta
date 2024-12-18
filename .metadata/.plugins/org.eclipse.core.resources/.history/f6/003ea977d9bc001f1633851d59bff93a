@@ -1,0 +1,294 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*, java.text.SimpleDateFormat" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%!
+    // Connexion à la base de données
+    private Connection getConnection() throws SQLException {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/hotel_management", // Base de données
+                "root", // Utilisateur
+                "triki" // Mot de passe
+            );
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver JDBC MySQL non trouvé", e);
+        }
+    }
+
+    // Récupérer les types de chambres disponibles
+    private List<String> getRoomTypes() throws SQLException {
+        List<String> roomTypes = new ArrayList<>();
+        try (Connection conn = getConnection()) {
+            String query = "SELECT label FROM RoomType";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            while (rs.next()) {
+                roomTypes.add(rs.getString("label"));
+            }
+        }
+        return roomTypes;
+    }
+
+    // Calculer le total du séjour en fonction des dates et du type de chambre
+    private double calculateTotal(String roomType, String checkIn, String checkOut) throws SQLException {
+        try (Connection conn = getConnection()) {
+            String query = "SELECT price FROM RoomType WHERE label = ?";
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, roomType);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                double pricePerNight = rs.getDouble("price");
+                java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+                java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+                long diff = checkOutDate.getTime() - checkInDate.getTime();
+                long days = diff / (1000 * 60 * 60 * 24);
+                return days * pricePerNight;
+            }
+        }
+        return 0;
+    }
+
+    // Créer une réservation
+    private boolean makeReservation(String firstName, String lastName, String email, String phone,
+                                    String checkIn, String checkOut, String roomType) {
+        try {
+            java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+            java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+
+            try (Connection conn = getConnection()) {
+                String query = "INSERT INTO Reservation " +
+                               "(guest_first_name, guest_last_name, guest_email, guest_phone, " +
+                               "check_in_date, check_out_date, room_type_id) " +
+                               "VALUES (?, ?, ?, ?, ?, ?, (SELECT id FROM RoomType WHERE label = ?))";
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                pstmt.setString(1, firstName);
+                pstmt.setString(2, lastName);
+                pstmt.setString(3, email);
+                pstmt.setString(4, phone);
+                pstmt.setDate(5, checkInDate);
+                pstmt.setDate(6, checkOutDate);
+                pstmt.setString(7, roomType);
+                int rowsAffected = pstmt.executeUpdate();
+                return rowsAffected > 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+%>
+
+<%
+    // Récupération des paramètres du formulaire
+    String firstName = request.getParameter("first_name");
+    String lastName = request.getParameter("last_name");
+    String email = request.getParameter("email");
+    String phone = request.getParameter("phone");
+    String checkIn = request.getParameter("check_in");
+    String checkOut = request.getParameter("check_out");
+    String roomType = request.getParameter("room_type");
+
+    boolean validReservation = false;
+    String errorMessage = "";
+    double totalAmount = 0;
+
+    if (firstName != null && lastName != null && email != null && phone != null &&
+        checkIn != null && checkOut != null && roomType != null) {
+        try {
+            totalAmount = calculateTotal(roomType, checkIn, checkOut);
+            if (makeReservation(firstName, lastName, email, phone, checkIn, checkOut, roomType)) {
+                validReservation = true;
+            } else {
+                errorMessage = "Une erreur est survenue lors de la réservation.";
+            }
+        } catch (IllegalArgumentException e) {
+            errorMessage = "Veuillez vérifier les dates. La date de départ doit être ultérieure à la date d'arrivée.";
+        } catch (SQLException e) {
+            errorMessage = "Erreur dans le traitement de la réservation.";
+        }
+    }
+
+    List<String> roomTypes = new ArrayList<>();
+    try {
+        roomTypes = getRoomTypes();
+    } catch (SQLException e) {
+        errorMessage = "Erreur lors de la récupération des types de chambres.";
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation d'une chambre</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 30px;
+        }
+
+        .form-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        input, select, button {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            background-color: #fafafa;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: #2196F3;
+            outline: none;
+            box-shadow: 0 0 5px rgba(33, 150, 243, 0.4);
+        }
+
+        button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #1976D2;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .error-message {
+            background-color: #f44336;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-footer {
+            display: flex;
+            justify-content: flex-start;
+            gap: 20px;
+        }
+
+        .form-footer button {
+            background-color: #f4f4f9;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .form-footer button:hover {
+            background-color: #ddd;
+        }
+    </style>
+    <script>
+        function showAlert(total, firstName, lastName, roomType, checkIn, checkOut) {
+            alert(`Réservation confirmée !\n` +
+                  `Client : ${firstName} ${lastName}\n` +
+                  `Type de chambre : ${roomType}\n` +
+                  `Date d'arrivée : ${checkIn}\n` +
+                  `Date de départ : ${checkOut}\n` +
+                  `Total à payer : ${total.toFixed(2)} TND`);
+        }
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Réservation d'une chambre</h2>
+
+        <% if (!errorMessage.isEmpty()) { %>
+            <div class="error-message"><%= errorMessage %></div>
+        <% } %>
+
+        <% if (validReservation) { %>
+            <div class="success-message">Votre réservation a été confirmée !</div>
+            <script>
+                showAlert(<%= totalAmount %>, "<%= firstName %>", "<%= lastName %>", "<%= roomType %>", "<%= checkIn %>", "<%= checkOut %>");
+            </script>
+        <% } %>
+
+        <form action="reservation.jsp" method="post" class="form-container">
+            <label for="first_name">Prénom :</label>
+            <input type="text" id="first_name" name="first_name" required>
+
+            <label for="last_name">Nom :</label>
+            <input type="text" id="last_name" name="last_name" required>
+
+            <label for="email">Email :</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="phone">Téléphone :</label>
+            <input type="text" id="phone" name="phone" required>
+
+            <label for="room_type">Type de chambre :</label>
+            <select id="room_type" name="room_type" required>
+                <option value="">Sélectionnez un type de chambre</option>
+                <% for (String type : roomTypes) { %>
+                    <option value="<%= type %>"><%= type %></option>
+                <% } %>
+            </select>
+
+            <label for="check_in">Date d'arrivée :</label>
+            <input type="date" id="check_in" name="check_in" required>
+
+            <label for="check_out">Date de départ :</label>
+            <input type="date" id="check_out" name="check_out" required>
+
+            <button type="submit">Réserver maintenant</button>
+        </form>
+
+        <div class="form-footer">
+            <button type="button" onclick="window.history.back();">Retour</button>
+        </div>
+    </div>
+
+</body>
+</html>
+
+

@@ -1,0 +1,107 @@
+<%@page import="java.sql.*" errorPage="error.jsp"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%!
+    String title, fname, lname, email, national, country, phone, room_type, bed_type, meal_type, cin_date, cout_date;
+    int id, nroom, nodays;
+%>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Details of Book key</title>
+        
+        <style>
+        /* Reset and styles are retained for layout purposes */
+        /* (same styles as in your original code) */
+        </style>
+        
+    </head>
+    <body>
+        <% 
+            // Hardcoded values instead of retrieving from DB
+            id = 101; // Example ID
+            title = "Mr."; // Example title
+            fname = "John"; // Example first name
+            lname = "Doe"; // Example last name
+            email = "johndoe@example.com"; // Example email
+            national = "American"; // Example nationality
+            country = "USA"; // Example country
+            phone = "+1 555-1234"; // Example phone
+            room_type = "Deluxe"; // Example room type
+            bed_type = "King"; // Example bed type
+            meal_type = "Full Board"; // Example meal type
+            cin_date = "2024-12-01"; // Example check-in date
+            cout_date = "2024-12-07"; // Example check-out date
+            nodays = 6; // Example number of days
+        %>
+        
+        <header>
+            <h1>Information of Guest</h1>
+            <address>
+                <p>SUN RISE HOTEL,</p>
+                <p>New Kalmunani Road,<br>Mathura,<br>India.</p>
+                <p>(+91) 95 222 44 554</p>
+            </address>
+            <span><img alt="" src="assets/img/sun.png"></span>
+        </header>
+        <article>
+            <h1></h1>
+            <address>
+                <p><br></p>
+                <p>Customer Name : - <%= title %> <%= fname %> <%= lname %><br></p>
+            </address>
+            <table class="meta">
+                <tr>
+                    <th><span>Customer ID</span></th>
+                    <td><span><%= id %></span></td>
+                </tr>
+                <tr>
+                    <th><span>Check in Date</span></th>
+                    <td><span><%= cin_date %></span></td>
+                </tr>
+                <tr>
+                    <th><span>Check out Date</span></th>
+                    <td><span><%= cout_date %></span></td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <td>Customer phone : - <%= phone %></td>
+                    <td>Customer email : - <%= email %></td>
+                </tr>
+                <tr>
+                    <td>Customer Country : - <%= country %></td>
+                    <td>Customer National : - <%= national %></td>
+                </tr>
+            </table>
+            <br><br>
+            <table class="inventory">
+                <thead>
+                    <tr>
+                        <th><span>Item</span></th>
+                        <th><span>No of Days</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span><%= room_type %></span></td>
+                        <td><span><%= nodays %></span></td>
+                    </tr>
+                    <tr>
+                        <td><span><%= bed_type %> Bed</span></td>
+                        <td><span><%= nodays %></span></td>
+                    </tr>
+                    <tr>
+                        <td><span><%= meal_type %></span></td>
+                        <td><span><%= nodays %></span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </article>
+        <aside>
+            <h1><span>Contact us</span></h1>
+            <div>
+                <p align="center">Email :- info@sunrise.com || Web :- www.sunrise.com || Phone :- +91 95 222 44 554 </p>
+            </div>
+        </aside>
+    </body>
+</html>

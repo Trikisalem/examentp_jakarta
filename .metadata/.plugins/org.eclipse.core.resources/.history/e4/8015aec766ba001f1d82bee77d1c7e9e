@@ -1,0 +1,71 @@
+<%@ page import="java.sql.*" errorPage="error.jsp" %>
+<%
+    // Configuration de la connexion à la base de données
+    Connection c = null;
+    String roomId = request.getParameter("id");
+
+    try {
+        // Charge le driver JDBC pour MySQL
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        
+        // Connexion à la base de données (Remplacez les paramètres par vos propres informations)
+        String url = "jdbc:mysql://localhost:3306/hotel_management"; // URL de la base de données
+        String username = "root"; // Nom d'utilisateur
+        String password = "triki"; // Mot de passe
+        
+        c = DriverManager.getConnection(url, username, password);
+        
+        if (roomId != null && !roomId.trim().isEmpty()) {
+            try {
+                // Validation de l'ID pour s'assurer qu'il est un entier valide
+                int id = Integer.parseInt(roomId);
+
+                // Suppression des réservations liées avant de supprimer le type de chambre
+                String deleteReservationsSql = "DELETE FROM reservation WHERE room_type_id = ?";
+                try (PreparedStatement pstDeleteReservations = c.prepareStatement(deleteReservationsSql)) {
+                    pstDeleteReservations.setInt(1, id);
+                    pstDeleteReservations.executeUpdate();
+                }
+
+                // Suppression du type de chambre dans RoomType
+                String deleteRoomTypeSql = "DELETE FROM RoomType WHERE id = ?";
+                try (PreparedStatement pstDelete = c.prepareStatement(deleteRoomTypeSql)) {
+                    pstDelete.setInt(1, id);
+                    int rowsDeleted = pstDelete.executeUpdate();
+                    if (rowsDeleted > 0) {
+                        response.sendRedirect("admin/roomtypes.jsp"); // Redirection après succès
+                    } else {
+                        out.println("<script>alert('Erreur : Type de chambre introuvable.');</script>");
+                    }
+                }
+            } catch (NumberFormatException e) {
+                // Gestion de l'erreur si l'ID n'est pas un entier valide
+                out.println("<script>alert('Erreur : Identifiant invalide.');</script>");
+            } catch (SQLException e) {
+                // Gestion des erreurs SQL
+                out.println("<script>alert('Erreur de base de données : " + e.getMessage() + "');</script>");
+            }
+        } else {
+            // Gestion du cas où l'ID est null ou vide
+            out.println("<script>alert('Erreur : ID non fourni.');</script>");
+        }
+    } catch (ClassNotFoundException e) {
+        // Erreur si le driver JDBC n'est pas trouvé
+        out.println("<script>alert('Erreur : Le driver JDBC n\'a pas été trouvé.');</script>");
+    } catch (SQLException e) {
+        // Erreur de connexion à la base de données
+        out.println("<script>alert('Erreur de connexion à la base de données : " + e.getMessage() + "');</script>");
+    } finally {
+        // Fermeture de la connexion
+        if (c != null) {
+            try {
+                c.close();
+            } catch (SQLException e) {
+                out.println("<script>alert('Erreur lors de la fermeture de la connexion : " + e.getMessage() + "');</script>");
+            }
+        }
+    }
+%>
+
+
+

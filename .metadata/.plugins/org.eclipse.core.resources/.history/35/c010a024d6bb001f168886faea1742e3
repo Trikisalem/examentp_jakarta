@@ -1,0 +1,213 @@
+package dao;
+
+import model.Hotel;
+import connecteur.MySQLConnectionTest; // Importez la classe de connexion
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class HotelDAO {
+
+    private MySQLConnectionTest connection;
+
+    // Constructeur avec connexion
+    public HotelDAO(MySQLConnectionTest connection) {
+        this.connection = connection;
+    }
+
+    // Méthode pour ajouter un hôtel dans la base de données
+    public void addHotel(Hotel hotel) throws SQLException {
+        String query = "INSERT INTO hotel (name, city, stars, description, image, agent_id) VALUES (?, ?, ?, ?, ?, ?)";
+
+        // Essayer d'établir une connexion à la base de données
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("Impossible d'établir une connexion à la base de données.");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, hotel.getName());
+                stmt.setString(2, hotel.getCity());
+                stmt.setInt(3, hotel.getStars());
+                stmt.setString(4, hotel.getDescription());
+                stmt.setString(5, hotel.getImage());
+                stmt.setInt(6, hotel.getAgentId());
+
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    System.out.println("Hotel ajouté avec succès !");
+                } else {
+                    System.out.println("Échec de l'ajout de l'hôtel.");
+                }
+            }
+        }
+    }
+
+    // Méthode pour supprimer un hôtel dans la base de données
+    public void deleteHotel(int id) throws SQLException {
+        String query = "DELETE FROM hotel WHERE id = ?";
+
+        // Essayer d'établir une connexion à la base de données
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("Impossible d'établir une connexion à la base de données.");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, id);
+
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    System.out.println("Hotel avec l'ID " + id + " supprimé avec succès.");
+                } else {
+                    System.out.println("Aucun hôtel trouvé avec l'ID " + id);
+                }
+            }
+        }
+    }
+
+    // Méthode pour mettre à jour un hôtel dans la base de données
+    public void updateHotel(Hotel hotel) throws SQLException {
+        String query = "UPDATE hotel SET name = ?, city = ?, stars = ?, description = ?, image = ?, agent_id = ? WHERE id = ?";
+
+        // Essayer d'établir une connexion à la base de données
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("Impossible d'établir une connexion à la base de données.");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, hotel.getName());
+                stmt.setString(2, hotel.getCity());
+                stmt.setInt(3, hotel.getStars());
+                stmt.setString(4, hotel.getDescription());
+                stmt.setString(5, hotel.getImage());
+                stmt.setInt(6, hotel.getAgentId());
+                stmt.setInt(7, hotel.getId());
+
+                int rowsUpdated = stmt.executeUpdate();
+                if (rowsUpdated > 0) {
+                    System.out.println("Hotel mis à jour avec succès !");
+                } else {
+                    System.out.println("Aucun hôtel trouvé avec l'ID donné.");
+                }
+            }
+        }
+    }
+
+    // Méthode pour obtenir un hôtel par ID
+    public Hotel getHotelById(int hotelId) throws SQLException {
+        String query = "SELECT * FROM hotel WHERE id = ?";
+        Hotel hotel = null;
+
+        // Essayer d'établir une connexion à la base de données
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("Impossible d'établir une connexion à la base de données.");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, hotelId);
+
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    hotel = new Hotel(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("city"),
+                        rs.getInt("stars"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getInt("agent_id")
+                    );
+                }
+            }
+        }
+
+        return hotel;
+    }
+
+    // Méthode pour rechercher des hôtels par ville et étoiles
+    public List<Hotel> searchHotels(String city, int stars) throws SQLException {
+        List<Hotel> hotels = new ArrayList<>();
+        String query = "SELECT * FROM hotel WHERE city LIKE ? AND stars = ?";
+
+        // Essayer d'établir une connexion à la base de données
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("Impossible d'établir une connexion à la base de données.");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, "%" + city + "%");
+                stmt.setInt(2, stars);
+
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Hotel hotel = new Hotel(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("city"),
+                        rs.getInt("stars"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getInt("agent_id")
+                    );
+                    hotels.add(hotel);
+                }
+            }
+        }
+
+        return hotels;
+    }
+
+    // Méthode pour obtenir tous les hôtels
+    public List<Hotel> getAllHotels() throws SQLException {
+        List<Hotel> hotels = new ArrayList<>();
+        String query = "SELECT * FROM hotel";
+
+        // Essayer d'établir une connexion à la base de données
+        try (Connection conn = connection.getConnection()) {
+            if (conn == null) {
+                throw new SQLException("Impossible d'établir une connexion à la base de données.");
+            }
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    Hotel hotel = new Hotel(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("city"),
+                        rs.getInt("stars"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getInt("agent_id")
+                    );
+                    hotels.add(hotel);
+                }
+            }
+        }
+
+        return hotels;
+    }
+
+ // Ajout de la méthode close() pour fermer la connexion, statement et resultSet
+    public void close(Connection conn, PreparedStatement stmt, ResultSet rs) {
+        try {
+            if (rs != null) {
+                rs.close();
+            }
+            if (stmt != null) {
+                stmt.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Optionnel : Ajouter un log si nécessaire pour suivre les erreurs de fermeture.
+        }
+    }
+
+}

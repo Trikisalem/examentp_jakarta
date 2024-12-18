@@ -1,0 +1,78 @@
+<%@page import="java.sql.*" errorPage="error.jsp"%>
+<%!
+    PreparedStatement ps;
+    ResultSet rs;
+%>
+<%
+    try {
+        // Get database connection
+        Connection c = (Connection) application.getAttribute("connection");
+        
+        // Get the newsletter ID from request
+        int eid = Integer.parseInt(request.getParameter("eid"));
+        
+        // Predefined approval statuses
+        final String ALLOWED = "Allowed";
+        final String NOT_ALLOWED = "Not Allowed";
+        
+        // Fetch current approval status
+        String currentApprovalStatus = "";
+        String viewQuery = "SELECT * FROM contact WHERE id = ?";
+        
+        ps = c.prepareStatement(viewQuery);
+        ps.setInt(1, eid);
+        rs = ps.executeQuery();
+        
+        if (rs.next()) {
+            currentApprovalStatus = rs.getString("approval");
+        }
+        
+        // Determine new status and update query
+        String newStatus = currentApprovalStatus.equalsIgnoreCase("Not Allowed") ? ALLOWED : NOT_ALLOWED;
+        String updateQuery = "UPDATE contact SET approval = ? WHERE id = ?";
+        
+        ps = c.prepareStatement(updateQuery);
+        ps.setString(1, newStatus);
+        ps.setInt(2, eid);
+        
+        int updateResult = ps.executeUpdate();
+        
+        if (updateResult > 0) {
+%>
+            <script>
+                alert("Newsletter status updated to <%= newStatus %>");
+                window.location.href = "messages.jsp";
+            </script>
+<%
+        } else {
+%>
+            <script>
+                alert("Failed to update newsletter status");
+                window.location.href = "messages.jsp";
+            </script>
+<%
+        }
+    } catch (SQLException e) {
+%>
+        <script>
+            alert("Database error: <%= e.getMessage() %>");
+            window.location.href = "messages.jsp";
+        </script>
+<%
+    } catch (NumberFormatException e) {
+%>
+        <script>
+            alert("Invalid newsletter ID");
+            window.location.href = "messages.jsp";
+        </script>
+<%
+    } finally {
+        // Close resources
+        try {
+            if (rs != null) rs.close();
+            if (ps != null) ps.close();
+        } catch (SQLException e) {
+            // Log error or handle appropriately
+        }
+    }
+%>

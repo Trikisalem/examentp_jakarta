@@ -1,0 +1,294 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*" %>
+
+<%!
+    // Database connection method
+    private Connection getConnection() throws SQLException {
+        try {
+            // Load JDBC driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/hotel_management", 
+                "root", 
+                "triki"
+            );
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("MySQL JDBC Driver not found", e);
+        }
+    }
+%>
+
+<%
+    // Get form parameters
+    String checkIn = request.getParameter("check_in");
+    String checkOut = request.getParameter("check_out");
+    String roomType = request.getParameter("room_type");
+    
+    // Validation variables
+    boolean validReservation = false;
+    String errorMessage = "";
+
+    if (checkIn != null && checkOut != null && roomType != null) {
+        try {
+            // Convert dates
+            java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+            java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+
+            // Validate dates
+            if (checkOutDate.after(checkInDate)) {
+                try (Connection conn = getConnection()) {
+                    // Find room type ID
+                    String findRoomTypeQuery = "SELECT id FROM RoomType WHERE label = ?";
+                    PreparedStatement roomTypeStmt = conn.prepareStatement(findRoomTypeQuery);
+                    roomTypeStmt.setString(1, roomType);
+                    ResultSet roomTypeRs = roomTypeStmt.executeQuery();
+
+                    if (roomTypeRs.next()) {
+                        int roomTypeId = roomTypeRs.getInt("id");
+
+                        // Prepare reservation insert (you'd typically get these from a login or form)
+                        String insertReservationQuery = "INSERT INTO Reservation " +
+                            "(guest_first_name, guest_last_name, guest_email, guest_phone, " +
+                            "check_in_date, check_out_date, room_type_id) VALUES " +
+                            "(?, ?, ?, ?, ?, ?, ?)";
+
+                        PreparedStatement pstmt = conn.prepareStatement(insertReservationQuery);
+                        pstmt.setString(1, "Guest"); // Placeholder
+                        pstmt.setString(2, "LastName"); // Placeholder
+                        pstmt.setString(3, "guest@example.com"); // Placeholder
+                        pstmt.setString(4, "1234567890"); // Placeholder
+                        pstmt.setDate(5, checkInDate);
+                        pstmt.setDate(6, checkOutDate);
+                        pstmt.setInt(7, roomTypeId);
+
+                        int rowsAffected = pstmt.executeUpdate();
+                        validReservation = rowsAffected > 0;
+                    } else {
+                        errorMessage = "Invalid room type selected.";
+                    }
+                }
+            } else {
+                errorMessage = "Check-out date must be after check-in date.";
+            }
+        } catch (Exception e) {
+            errorMessage = "Reservation error: " + e.getMessage();
+        }
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Réservation d'une chambre</title>
+    <!-- Previous CSS remains the same -->
+</head>
+<body>
+    <div class="form-container">
+        <h2>Réservation d'une chambre</h2>
+        
+        <% if (!errorMessage.isEmpty()) { %>
+            <div class="error-message"><%= errorMessage %></div>
+        <% } %>
+        
+        <% if (validReservation) { %>
+            <div class="confirmation-message">Réservation effectuée avec succès !</div>
+        <% } %>
+
+        <form action="reservation.jsp" method="post" id="reservation-form">
+            <!-- Previous form content remains the same -->
+        </form>
+    </div>
+</body>
+</html>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation d'une chambre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .form-container {
+            width: 60%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .form-container h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .reservation-details {
+            margin-top: 20px;
+        }
+        .reservation-details p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .error-message {
+            color: red;
+            font-size: 16px;
+        }
+        .confirmation-message {
+            color: green;
+            font-size: 18px;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .qr-code img {
+            width: 150px;
+            height: 150px;
+        }
+        .input-container {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>Réservation d'une chambre</h2>
+    
+    <!-- Message d'erreur ou de confirmation -->
+    <div id="error-message" class="error-message" style="display: none;"></div>
+    <div id="confirmation-message" class="confirmation-message" style="display: none;"></div>
+
+    <form action="reservation.jsp" method="post" id="reservation-form">
+        <!-- Type de chambre -->
+        <label for="room_type">Type de chambre :</label>
+        <select id="room_type" name="room_type" required onchange="updatePrice()">
+            <option value="Chambre vue jardin">Chambre vue jardin</option>
+            <option value="Chambre vue de mer">Chambre vue de mer</option>
+            <option value="Bungalow">Bungalow</option>
+        </select>
+
+        <!-- Dates de séjour -->
+        <div class="input-container">
+            <label for="check_in">Date d'arrivée :</label>
+            <input type="date" id="check_in" name="check_in" required onchange="updatePrice()">
+        </div>
+
+        <div class="input-container">
+            <label for="check_out">Date de départ :</label>
+            <input type="date" id="check_out" name="check_out" required onchange="updatePrice()">
+        </div>
+
+        <!-- Prix total caché -->
+        <input type="hidden" id="price" name="price" value="100">
+        <input type="hidden" id="total_price" name="total_price" value="0">
+
+        <!-- Détails de la réservation -->
+        <div id="reservation-details" class="reservation-details" style="display: none;">
+            <h3>Details de la réservation</h3>
+            <p><strong>Type de chambre :</strong> <span id="room_display"></span></p>
+            <p><strong>Date d'arrivée :</strong> <span id="check_in_display"></span></p>
+            <p><strong>Date de départ :</strong> <span id="check_out_display"></span></p>
+            <p><strong>Prix total :</strong> <span id="total_price_display"></span></p>
+        </div>
+
+        <button type="submit">Soumettre</button>
+    </form>
+
+    <!-- QR Code -->
+    <div class="qr-code">
+        <h3>Reconnaissance par QR Code</h3>
+        <p>Scannez ce QR Code pour plus d'informations :</p>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?data=http://example.com&size=150x150" alt="QR Code">
+    </div>
+</div>
+
+<script>
+    // Fonction pour calculer et afficher le prix
+    function updatePrice() {
+        var roomType = document.getElementById("room_type").value;
+        var priceField = document.getElementById("price");
+        var totalPriceField = document.getElementById("total_price");
+        
+        var dailyPrice = 0;
+        if (roomType === "Chambre vue jardin") {
+            dailyPrice = 100;
+        } else if (roomType === "Chambre vue de mer") {
+            dailyPrice = 180;
+        } else if (roomType === "Bungalow") {
+            dailyPrice = 250;
+        }
+        
+        priceField.value = dailyPrice;
+
+        var checkInDate = document.getElementById("check_in").value;
+        var checkOutDate = document.getElementById("check_out").value;
+
+        // Calcul du nombre de jours
+        if (checkInDate && checkOutDate) {
+            var checkIn = new Date(checkInDate);
+            var checkOut = new Date(checkOutDate);
+            var daysDiff = (checkOut - checkIn) / (1000 * 60 * 60 * 24);
+            if (daysDiff > 0) {
+                var totalPrice = dailyPrice * daysDiff;
+                totalPriceField.value = totalPrice;
+
+                // Affichage des détails de la réservation
+                document.getElementById("room_display").innerText = roomType;
+                document.getElementById("check_in_display").innerText = checkInDate;
+                document.getElementById("check_out_display").innerText = checkOutDate;
+                document.getElementById("total_price_display").innerText = totalPrice + " DT";
+
+                document.getElementById("reservation-details").style.display = "block";
+            } else {
+                document.getElementById("error-message").innerText = "La date de départ doit être après la date d'arrivée.";
+                document.getElementById("error-message").style.display = "block";
+            }
+        }
+    }
+
+    // Validation du formulaire avant soumission
+    document.getElementById("reservation-form").onsubmit = function (e) {
+        e.preventDefault();
+        var errorMessage = document.getElementById("error-message");
+        errorMessage.style.display = "none";
+
+        var checkInDate = document.getElementById("check_in").value;
+        var checkOutDate = document.getElementById("check_out").value;
+
+        if (checkInDate && checkOutDate) {
+            if (document.getElementById("total_price").value > 0) {
+                document.getElementById("reservation-form").submit();
+            } else {
+                errorMessage.innerText = "Veuillez remplir les dates correctement.";
+                errorMessage.style.display = "block";
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
+

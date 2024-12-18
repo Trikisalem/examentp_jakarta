@@ -1,0 +1,37 @@
+package com.service;
+
+import java.util.List;
+
+import com.model.Account;
+
+import repository.AccountRepository;
+
+public class AccountService {
+    private final AccountRepository accountRepository;
+
+    // Constructeur pour injecter le repository
+    public AccountService(AccountRepository accountRepository) {
+        this.accountRepository = accountRepository;
+    }
+
+    // Récupérer tous les comptes
+    public List<Account> getAllAccounts() {
+        return accountRepository.findAll();
+    }
+
+    // Récupérer un compte par ID
+    public Account getAccountById(Long id) {
+        return accountRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + id));
+    }
+
+    // Ajouter un nouveau compte
+    public Account addAccount(Account account) {
+        return accountRepository.save(account);
+    }
+
+    // Supprimer un compte par ID
+    public void deleteAccount(Long id) {
+        accountRepository.deleteById(id);
+    }
+}

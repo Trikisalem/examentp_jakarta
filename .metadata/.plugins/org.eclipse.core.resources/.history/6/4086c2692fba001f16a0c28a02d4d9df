@@ -1,0 +1,276 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.sql.*, java.util.*" %>
+
+<%!
+    // Méthode de connexion à la base de données
+    private Connection getConnection() throws SQLException {
+        try {
+            // Charger le driver JDBC
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(
+                "jdbc:mysql://localhost:3306/hotel_management", 
+                "root", 
+                "triki"
+            );
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("Driver JDBC MySQL non trouvé", e);
+        }
+    }
+
+    // Méthode pour récupérer les types de chambres de la base de données
+    private List<String> getRoomTypes() throws SQLException {
+        List<String> roomTypes = new ArrayList<>();
+        try (Connection conn = getConnection()) {
+            String query = "SELECT label FROM RoomType";
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+            
+            while (rs.next()) {
+                roomTypes.add(rs.getString("label"));
+            }
+        }
+        return roomTypes;
+    }
+
+    // Méthode pour valider et insérer une réservation dans la base de données
+    private boolean makeReservation(String checkIn, String checkOut, String roomType) {
+        try {
+            java.sql.Date checkInDate = java.sql.Date.valueOf(checkIn);
+            java.sql.Date checkOutDate = java.sql.Date.valueOf(checkOut);
+            String mappedRoomType = mapRoomType(roomType);
+
+            if (mappedRoomType == null) return false;
+
+            try (Connection conn = getConnection()) {
+                // Trouver l'ID du type de chambre
+                String findRoomTypeQuery = "SELECT id FROM RoomType WHERE label = ?";
+                PreparedStatement stmt = conn.prepareStatement(findRoomTypeQuery);
+                stmt.setString(1, mappedRoomType);
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    int roomTypeId = rs.getInt("id");
+
+                    // Insérer la réservation dans la base de données
+                    String insertReservationQuery = "INSERT INTO Reservation " +
+                        "(guest_first_name, guest_last_name, guest_email, guest_phone, " +
+                        "check_in_date, check_out_date, room_type_id) VALUES " +
+                        "(?, ?, ?, ?, ?, ?, ?)";
+                    PreparedStatement pstmt = conn.prepareStatement(insertReservationQuery);
+                    pstmt.setString(1, "Guest"); // Valeurs par défaut
+                    pstmt.setString(2, "LastName");
+                    pstmt.setString(3, "guest@example.com");
+                    pstmt.setString(4, "1234567890");
+                    pstmt.setDate(5, checkInDate);
+                    pstmt.setDate(6, checkOutDate);
+                    pstmt.setInt(7, roomTypeId);
+
+                    int rowsAffected = pstmt.executeUpdate();
+                    return rowsAffected > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return false;
+    }
+
+    // Méthode pour mapper les types de chambres front-end à ceux de la base de données
+    private String mapRoomType(String frontendRoomType) {
+        switch(frontendRoomType) {
+            case "Chambre vue jardin":
+                return "Garden View";
+            case "Chambre vue de mer":
+                return "Sea View";
+            case "Bungalow":
+                return "Suite";
+            default:
+                return null;
+        }
+    }
+%>
+
+<%
+    // Variables pour la gestion des formulaires
+    String checkIn = request.getParameter("check_in");
+    String checkOut = request.getParameter("check_out");
+    String roomType = request.getParameter("room_type");
+
+    boolean validReservation = false;
+    String errorMessage = "";
+
+    if (checkIn != null && checkOut != null && roomType != null) {
+        // Valider et insérer la réservation
+        if (makeReservation(checkIn, checkOut, roomType)) {
+            validReservation = true;
+        } else {
+            errorMessage = "Une erreur est survenue lors de la réservation.";
+        }
+    }
+    
+    // Récupérer les types de chambres depuis la base de données
+    List<String> roomTypes = new ArrayList<>();
+    try {
+        roomTypes = getRoomTypes();
+    } catch (SQLException e) {
+        errorMessage = "Erreur lors de la récupération des types de chambres.";
+    }
+%>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation d'une chambre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            line-height: 1.6;
+        }
+        .form-container {
+            width: 60%;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .form-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0 20px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .reservation-details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .reservation-details p {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #333;
+        }
+        .error-message {
+            color: #d9534f;
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .confirmation-message {
+            color: #3c763d;
+            background-color: #dff0d8;
+            border: 1px solid #d6e9c6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .qr-code img {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .input-container {
+            margin-bottom: 20px;
+        }
+        @media (max-width: 768px) {
+            .form-container {
+                width: 90%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Réservation d'une chambre</h2>
+
+        <% if (!errorMessage.isEmpty()) { %>
+            <div class="error-message"><%= errorMessage %></div>
+        <% } %>
+
+        <% if (validReservation) { %>
+            <div class="confirmation-message">Réservation effectuée avec succès !</div>
+        <% } %>
+
+        <form action="reservation.jsp" method="post" id="reservation-form">
+            <div class="input-container">
+                <label for="room_type">Type de chambre :</label>
+                <select id="room_type" name="room_type" required>
+                    <option value="">Sélectionnez un type de chambre</option>
+                    <% for (String type : roomTypes) { %>
+                        <option value="<%= type %>"><%= type %></option>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="input-container">
+                <label for="check_in">Date d'arrivée :</label>
+                <input type="date" id="check_in" name="check_in" required>
+            </div>
+
+            <div class="input-container">
+                <label for="check_out">Date de départ :</label>
+                <input type="date" id="check_out" name="check_out" required>
+            </div>
+
+            <button type="submit">Soumettre la réservation</button>
+        </form>
+
+        <div class="qr-code">
+            <h3>Reconnaissance par QR Code</h3>
+            <p>Scannez ce QR Code pour plus d'informations :</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?data=http://example.com&size=150x150" alt="QR Code">
+        </div>
+    </div>
+</body>
+</html>

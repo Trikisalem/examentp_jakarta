@@ -1,0 +1,26 @@
+package connecteur;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class MySQLConnectionTest {
+
+    private static final String URL = "jdbc:mysql://localhost:3306/hotel_management"; // Changez le nom de la base si nécessaire
+    private static final String USER = "root";  // Votre utilisateur MySQL
+    private static final String PASSWORD = "triki";  // Votre mot de passe MySQL
+
+    // Méthode pour obtenir la connexion
+    public Connection getConnection() {
+        try {
+            // Essayez d'établir la connexion à la base de données
+            return DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (SQLException e) {
+            // Si la connexion échoue, affichez une erreur spécifique
+            System.err.println("Erreur de connexion à la base de données : " + e.getMessage());
+            e.printStackTrace();
+            return null;  // Retourne null si la connexion échoue
+        }
+    }
+
+}

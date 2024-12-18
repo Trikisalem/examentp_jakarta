@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         id="WebApp_ID" version="5.0">
+
+    <display-name>hotel</display-name>
+
+    <!-- Définition de la page d'accueil -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>default.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- Déclaration du DispatcherServlet de Spring -->
+    <servlet>
+        <servlet-name>dispatcher</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>dispatcher</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+
+    <!-- Configuration des ressources statiques -->
+    <servlet>
+        <servlet-name>resources</servlet-name>
+        <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+        <init-param>
+            <param-name>dirAllowed</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>resources</servlet-name>
+        <url-pattern>/css/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>resources</servlet-name>
+        <url-pattern>/images/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>resources</servlet-name>
+        <url-pattern>/js/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Déclarations des servlets spécifiques de l'application -->
+    <servlet>
+        <servlet-name>RoomTypeServlet</servlet-name>
+        <servlet-class>servlet.RoomTypeServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RoomTypeServlet</servlet-name>
+        <url-pattern>/RoomTypeServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>RoomDetailsServlet</servlet-name>
+        <servlet-class>servlet.RoomDetailsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RoomDetailsServlet</servlet-name>
+        <url-pattern>/RoomDetailsServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>NewsletterActionServlet</servlet-name>
+        <servlet-class>servlet.NewsletterActionServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>NewsletterActionServlet</servlet-name>
+        <url-pattern>/NewsletterActionServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ReservationServlet</servlet-name>
+        <servlet-class>servlet.ReservationServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReservationServlet</servlet-name>
+        <url-pattern>/ReservationServlet</url-pattern>
+    </servlet-mapping>
+
+    <!-- Déclaration du SearchServlet -->
+    <servlet>
+        <servlet-name>SearchHotel</servlet-name>
+        <servlet-class>servlet.SearchHotel</servlet-class>
+    </servlet>
+   
+   
+
+</web-app>

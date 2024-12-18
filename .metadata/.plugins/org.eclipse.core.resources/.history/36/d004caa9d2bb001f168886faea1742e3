@@ -1,0 +1,56 @@
+package servlet;
+
+import dao.HotelDAO;
+import model.Hotel;
+import java.io.IOException;
+import java.sql.SQLException;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@WebServlet("/addHotel")
+public class AddHotelServlet extends HttpServlet {
+
+    // Processus de soumission du formulaire
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupérer les paramètres du formulaire
+        String name = request.getParameter("name");
+        String city = request.getParameter("city");
+        int stars = Integer.parseInt(request.getParameter("stars"));
+        String description = request.getParameter("description");
+        String image = request.getParameter("image"); // URL de l'image
+
+        // Créer un objet Hôtel à partir des données du formulaire
+        Hotel hotel = new Hotel();
+        hotel.setName(name);
+        hotel.setCity(city);
+        hotel.setStars(stars);
+        hotel.setDescription(description);
+        hotel.setImage(image);
+
+        // Créer une instance de HotelDAO pour interagir avec la base de données
+        HotelDAO hotelDAO = new HotelDAO();
+
+        try {
+            // Ajouter l'hôtel dans la base de données
+            hotelDAO.addHotel(hotel);
+            // Rediriger vers une page de succès (par exemple, la liste des hôtels)
+            response.sendRedirect("hotelList.jsp");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Gérer l'erreur en affichant un message d'erreur (par exemple)
+            response.sendRedirect("error.jsp");
+        } finally {
+            // Fermer les ressources du DAO (si nécessaire)
+            hotelDAO.close();
+        }
+    }
+
+    // Traitement de la requête GET (si nécessaire, vous pouvez rediriger vers un formulaire)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Rediriger vers un formulaire HTML pour ajouter un hôtel
+        request.getRequestDispatcher("addHotelForm.jsp").forward(request, response);
+    }
+}

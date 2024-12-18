@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Patients</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Connexion</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" class="form-control" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </form>
+
+        <h1 id="patientsTitle" style="display:none;">Liste des Patients</h1>
+        <button type="button" id="addPatientBtn" class="btn btn-primary" style="display:none;">Ajouter un Patient</button>
+        <br><br>
+
+        <div id="patientsList" style="display:none;">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Prénom</th>
+                        <th>Nom</th>
+                        <th>Date de naissance</th>
+                        <th>Téléphone</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="patientsTableBody">
+                    <!-- Les lignes de tableau seront ajoutées ici -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Formulaire d'ajout de patient (initialement caché) -->
+        <div id="patientFormContainer" style="display:none;">
+            <h2>Ajouter un Patient</h2>
+            <form id="patientForm">
+                <div class="form-group">
+                    <label>Prénom</label>
+                    <input type="text" class="form-control" name="firstName" required />
+                </div>
+                <div class="form-group">
+                    <label>Nom de famille</label>
+                    <input type="text" class="form-control" name="lastName" required />
+                </div>
+                <div class="form-group">
+                    <label>Date de naissance</label>
+                    <input type="date" class="form-control" name="birthDate" required />
+                </div>
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <input type="text" class="form-control" name="phone" required />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" class="form-control" name="email" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Annuler</button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script>
+        // Fonction de connexion et stockage du token
+        document.getElementById('loginForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+            if (data.token) {
+                localStorage.setItem('token', data.token); // Stocke le token dans localStorage
+                document.getElementById('patientsTitle').style.display = 'block';
+                document.getElementById('addPatientBtn').style.display = 'inline-block';
+                loadPatients();
+            } else {
+                alert('Identifiants invalides');
+            }
+        });
+
+        // Récupérer et afficher les patients dans un tableau
+        async function loadPatients() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Veuillez vous connecter d\'abord');
+                return;
+            }
+
+            const response = await fetch('/patients', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            const patients = await response.json();
+            let patientsHtml = '';
+            patients.forEach(patient => {
+                patientsHtml += `
+                    <tr>
+                        <td>${patient.firstName}</td>
+                        <td>${patient.lastName}</td>
+                        <td>${new Date(patient.birthDate).toLocaleDateString()}</td>
+                        <td>${patient.phone}</td>
+                        <td>${patient.email}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editPatient('${patient.id}')">Modifier</button>
+                            <button class="btn btn-danger" onclick="deletePatient('${patient.id}')">Supprimer</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('patientsTableBody').innerHTML = patientsHtml;
+            document.getElementById('patientsList').style.display = 'block';
+        }
+
+        // Afficher le formulaire d'ajout de patient
+        document.getElementById('addPatientBtn').addEventListener('click', function() {
+            document.getElementById('patientFormContainer').style.display = 'block';
+            document.getElementById('patientsList').style.display = 'none';
+            document.getElementById('addPatientBtn').style.display = 'none';
+        });
+
+        // Fonction pour annuler et revenir à la liste des patients
+        document.getElementById('cancelBtn').addEventListener('click', function() {
+            document.getElementById('patientFormContainer').style.display = 'none';
+            document.getElementById('patientsList').style.display = 'block';
+            document.getElementById('addPatientBtn').style.display = 'inline-block';
+        });
+
+        // Fonction pour ajouter un patient
+        document.getElementById('patientForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const form = new FormData(event.target);
+            const patientData = {
+                firstName: form.get('firstName'),
+                lastName: form.get('lastName'),
+                birthDate: form.get('birthDate'),
+                phone: form.get('phone'),
+                email: form.get('email'),
+            };
+
+            const token = localStorage.getItem('token');
+            const response = await fetch('/patients', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(patientData),
+            });
+
+            if (response.ok) {
+                loadPatients(); // Recharger la liste des patients
+                document.getElementById('patientFormContainer').style.display = 'none';
+                document.getElementById('patientsList').style.display = 'block';
+                document.getElementById('addPatientBtn').style.display = 'inline-block';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<%@ page import="java.sql.*" %>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion</title>
+  <style>
+    /* Styles pour la page de connexion */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+      text-align: center;
+    }
+
+    .login-container input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .login-container button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .login-container button:hover {
+      background-color: #45a049;
+    }
+
+    .login-container a {
+      display: block;
+      margin-top: 10px;
+      text-decoration: none;
+      color: #555;
+    }
+
+    .login-container .logo {
+      margin-bottom: 20px;
+    }
+
+    .login-container .logo img {
+      width: 100px;
+    }
+
+    .back-button {
+      background-color: #ccc;
+      color: black;
+      border-radius: 4px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .back-button:hover {
+      background-color: #999;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="logo">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Logo">
+    </div>
+    <h1>Connexion</h1>
+    <p>Connectez-vous pour accéder à votre compte</p>
+    <form method="post" action="">
+      <input type="text" name="user" placeholder="Nom d'utilisateur" required>
+      <input type="password" name="pass" placeholder="Mot de passe" required>
+      <button type="submit" name="submit">Se connecter</button>
+    </form>
+    <a href="#">Mot de passe oublié ?</a>
+
+    <!-- Bouton Retour vers la page précédente -->
+    <button class="back-button" onclick="window.history.back()">Retour</button>
+  </div>
+
+  <%-- Logique JSP pour gérer la connexion avec la base de données --%>
+  <%
+    if (request.getParameter("submit") != null) {
+      String username = request.getParameter("user");
+      String password = request.getParameter("pass");
+
+      Connection conn = null;
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+
+      try {
+        // Charger le driver MySQL
+        Class.forName("com.mysql.cj.jdbc.Driver");
+
+        // Connexion à la base de données
+        String dbUrl = "jdbc:mysql://localhost:3306/hotel_management"; // Utilisez le nom correct de votre base de données
+        String dbUsername = "root"; // Votre nom d'utilisateur MySQL
+        String dbPassword = "triki"; // Votre mot de passe MySQL
+
+        conn = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+
+        // Préparer la requête pour vérifier les identifiants
+        String sql = "SELECT * FROM Account WHERE username = ? AND password = ?";
+        ps = conn.prepareStatement(sql);
+        ps.setString(1, username); // Utilisez le nom d'utilisateur pour la vérification
+        ps.setString(2, password);
+
+        rs = ps.executeQuery();
+
+        if (rs.next()) {
+          // Si l'utilisateur existe, récupérer son rôle et rediriger
+          String role = rs.getString("role");
+          session.setAttribute("user", username);
+          if ("agent".equals(role)) {
+            response.sendRedirect("home.jsp");
+          } else if ("admin".equals(role)) {
+            response.sendRedirect("agent.jsp");
+          } else {
+            response.sendRedirect("home.jsp");
+          }
+        } else {
+          // Si les identifiants sont incorrects
+  %>
+          <script>
+            alert("Nom d'utilisateur ou mot de passe incorrect");
+          </script>
+  <%
+        }
+
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      } catch (SQLException e) {
+        e.printStackTrace();
+      } finally {
+        // Fermer la connexion à la base de données
+        try {
+          if (rs != null) rs.close();
+          if (ps != null) ps.close();
+          if (conn != null) conn.close();
+        } catch (SQLException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  %>
+
+</body>
+</html>
+

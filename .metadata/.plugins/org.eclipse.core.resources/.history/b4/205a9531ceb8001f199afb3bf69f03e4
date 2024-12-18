@@ -1,0 +1,193 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page import="java.util.*, java.io.*" %>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des agents</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container {
+            margin-bottom: 30px;
+        }
+
+        .form-container input[type="text"],
+        .form-container input[type="password"] {
+            width: 300px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .form-container button {
+            padding: 10px 20px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .form-container button:hover {
+            background-color: #357ae8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4285f4;
+            color: white;
+        }
+
+        a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .actions a {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Gestion des agents</h1>
+
+    <!-- Formulaire pour créer ou modifier un agent -->
+    <div class="form-container">
+        <h2>Créer / Modifier un agent</h2>
+        <form method="post" action="agent.jsp">
+            <input type="hidden" name="agentId" value="${param.agentId}">
+            <input type="text" name="username" value="${param.username}" placeholder="Nom d'utilisateur" required><br><br>
+            <input type="password" name="password" value="${param.password}" placeholder="Mot de passe" required><br><br>
+            <button type="submit" name="action" value="save">Sauvegarder</button>
+        </form>
+    </div>
+
+    <!-- Table des agents existants -->
+    <h2>Liste des agents</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom d'utilisateur</th>
+                <th>Mot de passe</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <c:forEach var="agent" items="${sessionScope.agents}">
+                <tr>
+                    <td>${agent.id}</td>
+                    <td>${agent.username}</td>
+                    <td>${agent.password}</td>
+                    <td class="actions">
+                        <a href="agent.jsp?action=edit&id=${agent.id}&username=${agent.username}&password=${agent.password}">Modifier</a>
+                        <a href="agent.jsp?action=delete&id=${agent.id}" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet agent ?')">Supprimer</a>
+                    </td>
+                </tr>
+            </c:forEach>
+        </tbody>
+    </table>
+</div>
+
+<%
+    // Initialisation de la liste d'agents en session si elle n'existe pas
+    List<Map<String, String>> agents = (List<Map<String, String>>) session.getAttribute("agents");
+    if (agents == null) {
+        agents = new ArrayList<>();
+        session.setAttribute("agents", agents);
+    }
+
+    String action = request.getParameter("action");
+    String agentId = request.getParameter("id");
+
+    if ("save".equals(action)) {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+        String id = request.getParameter("agentId");
+
+        // Si un agentId est fourni, on met à jour l'agent existant
+        if (id != null && !id.isEmpty()) {
+            for (Map<String, String> agent : agents) {
+                if (agent.get("id").equals(id)) {
+                    agent.put("username", username);
+                    agent.put("password", password);
+                    break;
+                }
+            }
+        } else {
+            // Sinon, on crée un nouvel agent avec un ID unique
+            Map<String, String> newAgent = new HashMap<>();
+            newAgent.put("id", String.valueOf(agents.size() + 1));  // ID unique basé sur la taille de la liste
+            newAgent.put("username", username);
+            newAgent.put("password", password);
+            agents.add(newAgent);
+        }
+        response.sendRedirect("agent.jsp");
+    } else if ("delete".equals(action)) {
+        // Suppression d'un agent par ID
+        for (Iterator<Map<String, String>> it = agents.iterator(); it.hasNext(); ) {
+            Map<String, String> agent = it.next();
+            if (agent.get("id").equals(agentId)) {
+                it.remove();
+                break;
+            }
+        }
+        response.sendRedirect("agent.jsp");
+    } else if ("edit".equals(action)) {
+        // Remplir le formulaire pour éditer un agent existant
+        Map<String, String> agentToEdit = null;
+        for (Map<String, String> agent : agents) {
+            if (agent.get("id").equals(agentId)) {
+                agentToEdit = agent;
+                break;
+            }
+        }
+        if (agentToEdit != null) {
+            request.setAttribute("username", agentToEdit.get("username"));
+            request.setAttribute("password", agentToEdit.get("password"));
+        }
+    }
+%>
+
+</body>
+</html>

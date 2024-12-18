@@ -1,0 +1,65 @@
+package servlet;
+
+import model.Hotel;
+import dao.HotelDAO;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.List;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet("/searchHotels")
+public class SearchHotelsServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+
+    private HotelDAO hotelDAO;
+
+    public SearchHotelsServlet() {
+        super();
+        // Initialisation de la connexion à la base de données
+        try {
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/your_database", "username", "password");
+            hotelDAO = new HotelDAO(connection); // Passer la connexion à l'objet HotelDAO
+        } catch (Exception e) {
+            e.printStackTrace(); // Gérer les erreurs de connexion
+        }
+    }
+
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // Récupérer les critères de recherche depuis la requête HTTP
+        String name = request.getParameter("name");
+        String city = request.getParameter("city");
+        String starsStr = request.getParameter("stars");
+
+        // Vérification que les paramètres ne sont pas nuls ou vides
+        if (name == null) name = "";
+        if (city == null) city = "";
+        if (starsStr == null || starsStr.isEmpty()) starsStr = "0"; // valeur par défaut si non précisé
+
+        int stars = 0;
+        try {
+            stars = Integer.parseInt(starsStr); // Convertir stars en entier
+        } catch (NumberFormatException e) {
+            // Si l'utilisateur entre un non-nombre, utilisez la valeur par défaut de 0
+            stars = 0;
+        }
+
+        // Rechercher les hôtels en fonction des critères
+        List<Hotel> hotels = hotelDAO.searchHotels(name, city, stars);
+
+        // Passer les résultats à la JSP pour affichage
+        request.setAttribute("hotels", hotels);
+
+        // Rediriger vers la page JSP pour afficher les résultats
+        request.getRequestDispatcher("searchResults.jsp").forward(request, response);
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        doGet(request, response);
+    }
+}
+

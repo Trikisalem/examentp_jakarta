@@ -1,0 +1,52 @@
+package servlet;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import model.Hotel;
+
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.List;
+
+import dao.HotelDAO;
+
+/**
+ * Servlet implementation class SearchServlet
+ */
+@WebServlet("/SearchServlet")
+public class SearchServlet extends HttpServlet {
+
+    private HotelDAO hotelDAO;
+
+    @Override
+    public void init() throws ServletException {
+        // Initialiser la connexion à la base de données et le DAO
+        try {
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/hotel_management", "root", "triki");
+            hotelDAO = new HotelDAO(connection);
+        } catch (SQLException e) {
+            throw new ServletException("Database connection error", e);
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String city = request.getParameter("city");
+        int stars = Integer.parseInt(request.getParameter("stars"));
+
+        try {
+            List<Hotel> hotels = hotelDAO.searchHotels(city, stars);
+            request.setAttribute("hotels", hotels);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/searchResults.jsp");
+            dispatcher.forward(request, response);
+        } catch (SQLException e) {
+            throw new ServletException("Error retrieving hotels", e);
+        }
+    }
+}

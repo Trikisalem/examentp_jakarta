@@ -1,0 +1,62 @@
+<%@ page import="java.sql.*, javax.servlet.*, javax.servlet.http.*" errorPage="error.jsp" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUN RISE ADMIN</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="login">
+            <form method="post" action="index.jsp">
+                <fieldset class="clearfix">
+                    <p>
+                        <input type="text" name="user" placeholder="Username" required>
+                    </p>
+                    <p>
+                        <input type="password" name="pass" placeholder="Password" required>
+                    </p>
+                    <p>
+                        <input type="submit" name="submit" value="Login">
+                    </p>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+
+    <%
+        if (request.getParameter("submit") != null) {
+            String myusername = request.getParameter("user");
+            String mypassword = request.getParameter("pass");
+
+            Connection c = null;
+            try {
+                c = (Connection) application.getAttribute("connection");
+                String query = "SELECT id FROM login WHERE username = ? AND pass = ?";
+                PreparedStatement ps = c.prepareStatement(query);
+                ps.setString(1, myusername);
+                ps.setString(2, mypassword);
+                ResultSet rs = ps.executeQuery();
+
+                if (rs.next()) {
+                    session.setAttribute("user", myusername);
+                    response.sendRedirect("home.jsp");
+                } else {
+                    out.println("<script>alert('Invalid login or password');</script>");
+                }
+            } catch (SQLException e) {
+                out.println("<script>alert('Database error: " + e.getMessage() + "');</script>");
+            } finally {
+                try {
+                    if (c != null) c.close();
+                } catch (SQLException e) {
+                    out.println("<script>alert('Error closing connection: " + e.getMessage() + "');</script>");
+                }
+            }
+        }
+    %>
+</body>
+</html>
+

@@ -1,0 +1,45 @@
+package connecteur;
+
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class MySQLConnectionTest {
+
+    public static void main(String[] args) {
+        // URL de connexion à MySQL (remplacez par votre adresse de base de données)
+        String url = "jdbc:mysql://localhost:3306/hotel"; // Changez 'hotel_management' par le nom de votre base
+        String username = "root"; // Remplacez par votre nom d'utilisateur MySQL
+        String password = "triki"; // Remplacez par votre mot de passe MySQL
+
+        // Tester la connexion
+        try {
+            // Charge le driver MySQL
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            
+            // Établir la connexion
+            Connection connection = DriverManager.getConnection(url, username, password);
+            
+            if (connection != null) {
+                System.out.println("Connexion réussie à la base de données !");
+            } else {
+                System.out.println("Échec de la connexion.");
+            }
+
+            // Fermer la connexion
+            connection.close();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            System.out.println("Driver MySQL non trouvé.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Erreur de connexion à la base de données.");
+        }
+    }
+
+	public static Connection getConnection() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}
